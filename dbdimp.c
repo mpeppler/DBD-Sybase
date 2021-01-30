@@ -2347,7 +2347,7 @@ int syb_db_STORE_attrib(SV *dbh, imp_dbh_t *imp_dbh, SV *keysv, SV *valuesv) {
     } else {
       imp_dbh->binaryImage = 0;
     }
-    return TRUE;
+    return TRUE;
   }
   if (kl == 18 && strEQ(key, "syb_deadlock_retry")) {
     int value = SvIV(valuesv);
