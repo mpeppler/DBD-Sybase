@@ -1,4 +1,4 @@
-
+/*
  Copyright (c) 1997-2011  Michael Peppler
 
  You may distribute under the terms of either the GNU General Public
