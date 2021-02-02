@@ -1616,19 +1616,21 @@ static int syb_db_use(imp_dbh_t *imp_dbh, CS_CONNECTION *connection) {
   int retval = 0;
   char *db;
 
-  if (!cmd)
+  if (!cmd) {
     return -1;
+  }
 
-  if (DBIc_ACTIVE(imp_dbh) && imp_dbh->curr_db[0])
+  if (DBIc_ACTIVE(imp_dbh) && imp_dbh->curr_db[0]) {
     db = imp_dbh->curr_db;
-  else
+  } else {
     db = imp_dbh->database;
+  }
 
   sprintf(statement, "use [%s]", db);
 
-  if (DBIc_DBISTATE(imp_dbh)->debug >= 3)
-    PerlIO_printf(DBIc_LOGPIO(imp_dbh),
-        "    syb_db_use() -> ct_command(%s)\n", statement);
+  if (DBIc_DBISTATE(imp_dbh)->debug >= 3) {
+    PerlIO_printf(DBIc_LOGPIO(imp_dbh), "    syb_db_use() -> ct_command(%s)\n", statement);
+  }
   ret = ct_command(cmd, CS_LANG_CMD, statement, CS_NULLTERM, CS_UNUSED);
   if (ret != CS_SUCCEED) {
     warn("ct_command failed for '%s'", statement);
@@ -1640,12 +1642,11 @@ static int syb_db_use(imp_dbh_t *imp_dbh, CS_CONNECTION *connection) {
     return -1;
   }
   while ((ret = ct_results(cmd, &restype)) == CS_SUCCEED) {
-    if (DBIc_DBISTATE(imp_dbh)->debug >= 3)
-      PerlIO_printf(DBIc_LOGPIO(imp_dbh),
-          "    syb_db_use() -> ct_results(%d)\n", restype);
+    if (DBIc_DBISTATE(imp_dbh)->debug >= 3) {
+      PerlIO_printf(DBIc_LOGPIO(imp_dbh), "    syb_db_use() -> ct_results(%d)\n", restype);
+    }
     if (restype == CS_CMD_FAIL) {
-      warn("DBD::Sybase - can't change context to database %s\n",
-          imp_dbh->database);
+      warn("DBD::Sybase - can't change context to database %s\n", imp_dbh->database);
       retval = -1;
     }
   }
@@ -1686,16 +1687,17 @@ static int get_server_version(SV *dbh, imp_dbh_t *imp_dbh, CS_CONNECTION *con) {
   int retval = 0;
   char *db;
 
-  if (!cmd)
+  if (!cmd) {
     return -1;
+  }
 
   memset(version, 0, sizeof(imp_dbh->serverVersion));
 
   sprintf(statement, "select @@version");
 
-  if (DBIc_DBISTATE(imp_dbh)->debug >= 3)
-    PerlIO_printf(DBIc_LOGPIO(imp_dbh),
-        "    get_server_version() -> ct_command(%s)\n", statement);
+  if (DBIc_DBISTATE(imp_dbh)->debug >= 3) {
+    PerlIO_printf(DBIc_LOGPIO(imp_dbh), "    get_server_version() -> ct_command(%s)\n", statement);
+  }
   ret = ct_command(cmd, CS_LANG_CMD, statement, CS_NULLTERM, CS_UNUSED);
   if (ret != CS_SUCCEED) {
     warn("ct_command failed for '%s'", statement);
@@ -1707,13 +1709,13 @@ static int get_server_version(SV *dbh, imp_dbh_t *imp_dbh, CS_CONNECTION *con) {
     return -1;
   }
   while ((ret = ct_results(cmd, &restype)) == CS_SUCCEED) {
-    if (DBIc_DBISTATE(imp_dbh)->debug >= 3)
-      PerlIO_printf(DBIc_LOGPIO(imp_dbh),
-          "    get_server_version() -> ct_results(%d)\n", restype);
+    if (DBIc_DBISTATE(imp_dbh)->debug >= 3) {
+      PerlIO_printf(DBIc_LOGPIO(imp_dbh), "    get_server_version() -> ct_results(%d)\n", restype);
+    }
     if (restype == CS_CMD_FAIL) {
-      if (DBIc_DBISTATE(imp_dbh)->debug >= 3)
-        PerlIO_printf(DBIc_LOGPIO(imp_dbh),
-            "    get_server_version() -> Can't get version value\n");
+      if (DBIc_DBISTATE(imp_dbh)->debug >= 3) {
+        PerlIO_printf(DBIc_LOGPIO(imp_dbh), "    get_server_version() -> Can't get version value\n");
+      }
       retval = -1;
     }
     if (restype == CS_ROW_RESULT) {
@@ -1727,23 +1729,19 @@ static int get_server_version(SV *dbh, imp_dbh_t *imp_dbh, CS_CONNECTION *con) {
       datafmt.format = CS_FMT_NULLTERM;
       datafmt.maxlength = sizeof(buff);
       ct_bind(cmd, 1, &datafmt, buff, &len, &indicator);
-      while ((retcode = ct_fetch(cmd, CS_UNUSED, CS_UNUSED, CS_UNUSED,
-          &rows)) == CS_SUCCEED) {
-        if (DBIc_DBISTATE(imp_dbh)->debug >= 3)
-          PerlIO_printf(DBIc_LOGPIO(imp_dbh),
-              "    get_server_version() -> version = %s\n", buff);
-        strncpy(imp_dbh->serverVersionString, buff,
-            sizeof(imp_dbh->serverVersionString));
+      while ((retcode = ct_fetch(cmd, CS_UNUSED, CS_UNUSED, CS_UNUSED, &rows)) == CS_SUCCEED) {
+        if (DBIc_DBISTATE(imp_dbh)->debug >= 3) {
+          PerlIO_printf(DBIc_LOGPIO(imp_dbh), "    get_server_version() -> version = %s\n", buff);
+        }
+        strncpy(imp_dbh->serverVersionString, buff, sizeof(imp_dbh->serverVersionString));
         extract_version(buff, version);
-        strncpy(imp_dbh->serverVersion, version,
-            sizeof(imp_dbh->serverVersion));
-        if (DBIc_DBISTATE(imp_dbh)->debug >= 3)
-          PerlIO_printf(DBIc_LOGPIO(imp_dbh),
-              "    get_server_version() -> version = %s\n",
+        strncpy(imp_dbh->serverVersion, version, sizeof(imp_dbh->serverVersion));
+        if (DBIc_DBISTATE(imp_dbh)->debug >= 3) {
+          PerlIO_printf(DBIc_LOGPIO(imp_dbh), "    get_server_version() -> version = %s\n",
               imp_dbh->serverVersion);
+        }
       }
     }
-
   }
   ct_cmd_drop(cmd);
 
@@ -1768,12 +1766,13 @@ int syb_ping(SV *dbh, imp_dbh_t *imp_dbh) {
 
   cmd = syb_alloc_cmd(imp_dbh, imp_dbh->connection);
 
-  if (!cmd)
+  if (!cmd) {
     return 0;
+  }
 
-  if (DBIc_DBISTATE(imp_dbh)->debug >= 3)
-    PerlIO_printf(DBIc_LOGPIO(imp_dbh),
-        "    syb_ping() -> ct_command(%s)\n", statement);
+  if (DBIc_DBISTATE(imp_dbh)->debug >= 3) {
+    PerlIO_printf(DBIc_LOGPIO(imp_dbh), "    syb_ping() -> ct_command(%s)\n", statement);
+  }
   ret = ct_command(cmd, CS_LANG_CMD, statement, CS_NULLTERM, CS_UNUSED);
   if (ret != CS_SUCCEED) {
     ct_cmd_drop(cmd);
@@ -1785,9 +1784,9 @@ int syb_ping(SV *dbh, imp_dbh_t *imp_dbh) {
     return 0;
   }
   while ((ret = ct_results(cmd, &restype)) == CS_SUCCEED) {
-    if (DBIc_DBISTATE(imp_dbh)->debug >= 3)
-      PerlIO_printf(DBIc_LOGPIO(imp_dbh),
-          "    syb_ping() -> ct_results(%d)\n", restype);
+    if (DBIc_DBISTATE(imp_dbh)->debug >= 3) {
+      PerlIO_printf(DBIc_LOGPIO(imp_dbh), "    syb_ping() -> ct_results(%d)\n", restype);
+    }
     if (imp_dbh->isDead) {
       ct_cmd_drop(cmd);
       return 0;
@@ -1844,13 +1843,13 @@ int syb_db_date_fmt(SV *dbh, imp_dbh_t *imp_dbh, char *fmt) {
   }
   if (cs_dt_info(context, CS_SET, LOCALE(imp_dbh), CS_DT_CONVFMT, CS_UNUSED,
       (CS_VOID*) &type, CS_SIZEOF(CS_INT), NULL) != CS_SUCCEED) {
-        warn("cs_dt_info() failed");
+      warn("cs_dt_info() failed");
 
-        return 0;
-      }
-
-      return 1;
+      return 0;
     }
+
+  return 1;
+}
 
 static int syb_get_date_fmt(imp_dbh_t *imp_dbh, char *fmt) {
   CS_INT type;
@@ -1926,23 +1925,26 @@ static int syb_blk_done(imp_sth_t *imp_sth, CS_INT type) {
     return 1;
   }
   ret = blk_done(imp_sth->bcp_desc, type, &imp_sth->numRows);
-  if (DBIc_DBISTATE(imp_sth)->debug >= 4)
+  if (DBIc_DBISTATE(imp_sth)->debug >= 4) {
     PerlIO_printf(DBIc_LOGPIO(imp_sth),
         "    syb_blk_done -> blk_done(%d, %d, %d) = %d\n",
         imp_sth->bcp_desc, type, imp_sth->numRows, ret);
+  }
 
   /* reset row counter if blk_done was successful */
   if (ret == CS_SUCCEED) {
-    if (type == CS_BLK_CANCEL)
+    if (type == CS_BLK_CANCEL) {
       imp_sth->bcpRows = -1;
-    else
+    } else {
       imp_sth->bcpRows = 0;
+    }
   }
 
-  if (DBIc_DBISTATE(imp_sth)->debug >= 3)
+  if (DBIc_DBISTATE(imp_sth)->debug >= 3) {
     PerlIO_printf(DBIc_LOGPIO(imp_sth),
         "    syb_blk_done(%d) -> ret = %d, rows = %d\n", type, ret,
         imp_sth->numRows);
+  }
 
   return ret == CS_SUCCEED;
 }
@@ -1956,14 +1958,16 @@ int syb_db_commit(SV *dbh, imp_dbh_t *imp_dbh) {
   int failFlag = 0;
 
   if (imp_dbh->imp_sth && imp_dbh->imp_sth->bcpFlag) {
-    if (DBIc_DBISTATE(imp_dbh)->debug >= 3)
+    if (DBIc_DBISTATE(imp_dbh)->debug >= 3) {
       PerlIO_printf(DBIc_LOGPIO(imp_dbh),
           "    syb_db_commit() -> bcp op, calling syb_blk_done()\n");
+    }
     return syb_blk_done(imp_dbh->imp_sth, CS_BLK_BATCH);
   }
 
-  if (imp_dbh->doRealTran && !imp_dbh->inTransaction)
+  if (imp_dbh->doRealTran && !imp_dbh->inTransaction) {
     return 1;
+  }
 
   if (DBIc_is(imp_dbh, DBIcf_AutoCommit)) {
     warn("commit ineffective with AutoCommit");
@@ -1971,32 +1975,39 @@ int syb_db_commit(SV *dbh, imp_dbh_t *imp_dbh) {
   }
 
   cmd = syb_alloc_cmd(imp_dbh, imp_dbh->connection);
-  if (imp_dbh->doRealTran)
+  if (imp_dbh->doRealTran) {
     sprintf(buff, "\nCOMMIT TRAN %s\n", imp_dbh->tranName);
-  else
+  } else {
     strcpy(buff, "\nCOMMIT TRAN\n");
-  if (DBIc_DBISTATE(imp_dbh)->debug >= 3)
+  }
+  if (DBIc_DBISTATE(imp_dbh)->debug >= 3) {
     PerlIO_printf(DBIc_LOGPIO(imp_dbh),
         "    syb_db_commit() -> ct_command(%s)\n", buff);
+  }
   retcode = ct_command(cmd, CS_LANG_CMD, buff, CS_NULLTERM, CS_UNUSED);
-  if (retcode != CS_SUCCEED)
+  if (retcode != CS_SUCCEED) {
     return 0;
+  }
 
-  if (ct_send(cmd) != CS_SUCCEED)
+  if (ct_send(cmd) != CS_SUCCEED) {
     return 0;
+  }
 
-  if (DBIc_DBISTATE(imp_dbh)->debug >= 3)
+  if (DBIc_DBISTATE(imp_dbh)->debug >= 3) {
     PerlIO_printf(DBIc_LOGPIO(imp_dbh),
         "    syb_db_commit() -> ct_send() OK\n");
+  }
 
   while ((retcode = ct_results(cmd, &restype)) == CS_SUCCEED) {
-    if (DBIc_DBISTATE(imp_dbh)->debug >= 3)
+    if (DBIc_DBISTATE(imp_dbh)->debug >= 3) {
       PerlIO_printf(DBIc_LOGPIO(imp_dbh),
           "    syb_db_commit() -> ct_results(%d) == %d\n", restype,
           retcode);
+    }
 
-    if (restype == CS_CMD_FAIL)
+    if (restype == CS_CMD_FAIL) {
       failFlag = 1;
+    }
   }
 
   ct_cmd_drop(cmd);
@@ -2013,14 +2024,16 @@ int syb_db_rollback(SV *dbh, imp_dbh_t *imp_dbh) {
   int failFlag = 0;
 
   if (imp_dbh->imp_sth && imp_dbh->imp_sth->bcpFlag) {
-    if (DBIc_DBISTATE(imp_dbh)->debug >= 3)
+    if (DBIc_DBISTATE(imp_dbh)->debug >= 3) {
       PerlIO_printf(DBIc_LOGPIO(imp_dbh),
           "    syb_db_rollback() -> bcp op, calling syb_blk_done()\n");
+    }
     return syb_blk_done(imp_dbh->imp_sth, CS_BLK_CANCEL);
   }
 
-  if (imp_dbh->doRealTran && !imp_dbh->inTransaction)
+  if (imp_dbh->doRealTran && !imp_dbh->inTransaction) {
     return 1;
+  }
 
   if (DBIc_is(imp_dbh, DBIcf_AutoCommit)) {
     warn("rollback ineffective with AutoCommit");
@@ -2028,32 +2041,39 @@ int syb_db_rollback(SV *dbh, imp_dbh_t *imp_dbh) {
   }
 
   cmd = syb_alloc_cmd(imp_dbh, imp_dbh->connection);
-  if (imp_dbh->doRealTran)
+  if (imp_dbh->doRealTran) {
     sprintf(buff, "\nROLLBACK TRAN %s\n", imp_dbh->tranName);
-  else
+  } else {
     strcpy(buff, "\nROLLBACK TRAN\n");
-  if (DBIc_DBISTATE(imp_dbh)->debug >= 3)
+  }
+  if (DBIc_DBISTATE(imp_dbh)->debug >= 3) {
     PerlIO_printf(DBIc_LOGPIO(imp_dbh),
         "    syb_db_rollback() -> ct_command(%s)\n", buff);
+  }
   retcode = ct_command(cmd, CS_LANG_CMD, buff, CS_NULLTERM, CS_UNUSED);
-  if (retcode != CS_SUCCEED)
+  if (retcode != CS_SUCCEED) {
     return 0;
+  }
 
-  if (ct_send(cmd) != CS_SUCCEED)
+  if (ct_send(cmd) != CS_SUCCEED) {
     return 0;
+  }
 
-  if (DBIc_DBISTATE(imp_dbh)->debug >= 3)
+  if (DBIc_DBISTATE(imp_dbh)->debug >= 3) {
     PerlIO_printf(DBIc_LOGPIO(imp_dbh),
         "    syb_db_rollback() -> ct_send() OK\n");
+  }
 
   while ((retcode = ct_results(cmd, &restype)) == CS_SUCCEED) {
-    if (DBIc_DBISTATE(imp_dbh)->debug >= 3)
+    if (DBIc_DBISTATE(imp_dbh)->debug >= 3) {
       PerlIO_printf(DBIc_LOGPIO(imp_dbh),
           "    syb_db_rollback() -> ct_results(%d) == %d\n", restype,
           retcode);
+    }
 
-    if (restype == CS_CMD_FAIL)
+    if (restype == CS_CMD_FAIL) {
       failFlag = 1;
+    }
   }
 
   ct_cmd_drop(cmd);
@@ -2068,39 +2088,47 @@ static int syb_db_opentran(SV *dbh, imp_dbh_t *imp_dbh) {
   CS_RETCODE retcode;
   int failFlag = 0;
 
-  if (DBIc_is(imp_dbh, DBIcf_AutoCommit) || imp_dbh->inTransaction)
+  if (DBIc_is(imp_dbh, DBIcf_AutoCommit) || imp_dbh->inTransaction) {
     return 1;
+  }
 
   cmd = syb_alloc_cmd(imp_dbh, imp_dbh->connection);
   sprintf(imp_dbh->tranName, "DBI%x", imp_dbh);
   sprintf(buff, "\nBEGIN TRAN %s\n", imp_dbh->tranName);
   retcode = ct_command(cmd, CS_LANG_CMD, buff, CS_NULLTERM, CS_UNUSED);
-  if (DBIc_DBISTATE(imp_dbh)->debug >= 3)
+  if (DBIc_DBISTATE(imp_dbh)->debug >= 3) {
     PerlIO_printf(DBIc_LOGPIO(imp_dbh),
         "    syb_db_opentran() -> ct_command(%s) = %d\n", buff, retcode);
-  if (retcode != CS_SUCCEED)
+  }
+  if (retcode != CS_SUCCEED) {
     return 0;
+  }
   retcode = ct_send(cmd);
-  if (DBIc_DBISTATE(imp_dbh)->debug >= 3)
+  if (DBIc_DBISTATE(imp_dbh)->debug >= 3) {
     PerlIO_printf(DBIc_LOGPIO(imp_dbh),
         "    syb_db_opentran() -> ct_send() = %d\n", retcode);
+  }
 
-  if (retcode != CS_SUCCEED)
+  if (retcode != CS_SUCCEED) {
     return 0;
+  }
 
   while ((retcode = ct_results(cmd, &restype)) == CS_SUCCEED) {
-    if (DBIc_DBISTATE(imp_dbh)->debug >= 3)
+    if (DBIc_DBISTATE(imp_dbh)->debug >= 3) {
       PerlIO_printf(DBIc_LOGPIO(imp_dbh),
           "    syb_db_opentran() -> ct_results(%d) == %d\n", restype,
           retcode);
+    }
 
-    if (restype == CS_CMD_FAIL)
+    if (restype == CS_CMD_FAIL) {
       failFlag = 1;
+    }
   }
 
   ct_cmd_drop(cmd);
-  if (!failFlag)
+  if (!failFlag) {
     imp_dbh->inTransaction = 1;
+  }
   return !failFlag;
 }
 
@@ -2112,35 +2140,40 @@ int syb_db_disconnect(SV *dbh, imp_dbh_t *imp_dbh) {
    * was created then we do NOT disconnect.
    */
   if (imp_dbh->disconnectInChild = 0 && imp_dbh->pid != getpid()) {
-    if (DBIc_DBISTATE(imp_dbh)->debug >= 3)
+    if (DBIc_DBISTATE(imp_dbh)->debug >= 3) {
       PerlIO_printf(
           DBIc_LOGPIO(imp_dbh),
           "    syb_db_disconnect() -> imp_dbh->pid (%d) != pid (%d) - not closing connection\n",
           imp_dbh->pid, getpid());
+    }
     return 0;
   }
 
   /* rollback if we get disconnected and no explicit commit
    has been called (when in non-AutoCommit mode) */
   if (imp_dbh->isDead == 0) { /* only call if connection still active */
-    if (!DBIc_is(imp_dbh, DBIcf_AutoCommit))
+    if (!DBIc_is(imp_dbh, DBIcf_AutoCommit)) {
       syb_db_rollback(dbh, imp_dbh);
+    }
   }
 
-  if (DBIc_DBISTATE(imp_dbh)->debug >= 3)
+  if (DBIc_DBISTATE(imp_dbh)->debug >= 3) {
     PerlIO_printf(DBIc_LOGPIO(imp_dbh),
         "    syb_db_disconnect() -> ct_close()\n");
-  if ((retcode = ct_close(imp_dbh->connection, CS_FORCE_CLOSE)) != CS_SUCCEED)
+  }
+  if ((retcode = ct_close(imp_dbh->connection, CS_FORCE_CLOSE)) != CS_SUCCEED) {
     PerlIO_printf(DBIc_LOGPIO(imp_dbh),
         "    syb_db_disconnect(): ct_close() failed\n");
+  }
 
-  if (imp_dbh->locale && (retcode = cs_loc_drop(context, imp_dbh->locale))
-      != CS_SUCCEED)
+  if (imp_dbh->locale && (retcode = cs_loc_drop(context, imp_dbh->locale)) != CS_SUCCEED) {
     PerlIO_printf(DBIc_LOGPIO(imp_dbh),
         "    syb_db_disconnect(): cs_loc_drop() failed\n");
-  if ((retcode = ct_con_drop(imp_dbh->connection)) != CS_SUCCEED)
+  }
+  if ((retcode = ct_con_drop(imp_dbh->connection)) != CS_SUCCEED) {
     PerlIO_printf(DBIc_LOGPIO(imp_dbh),
         "    syb_db_disconnect(): ct_con_drop() failed\n");
+  }
 
   DBIc_ACTIVE_off(imp_dbh);
 
@@ -2148,8 +2181,9 @@ int syb_db_disconnect(SV *dbh, imp_dbh_t *imp_dbh) {
 }
 
 void syb_db_destroy(SV *dbh, imp_dbh_t *imp_dbh) {
-  if (DBIc_ACTIVE(imp_dbh))
+  if (DBIc_ACTIVE(imp_dbh)) {
     syb_db_disconnect(dbh, imp_dbh);
+  }
   /* Nothing in imp_dbh to be freed	*/
 
   DBIc_IMPSET_off(imp_dbh);
@@ -2170,26 +2204,29 @@ int syb_db_STORE_attrib(SV *dbh, imp_dbh_t *imp_dbh, SV *keysv, SV *valuesv) {
     on = SvTRUE(valuesv);
     if (imp_dbh->chainedSupported) {
       int autocommit = DBIc_is(imp_dbh, DBIcf_AutoCommit);
-      if (!autocommit)
+      if (!autocommit) {
         syb_db_commit(dbh, imp_dbh);
+      }
       if (on) {
         imp_dbh->doRealTran = 0;
       } else {
         imp_dbh->doRealTran = 1;
       }
-      if (DBIc_DBISTATE(imp_dbh)->debug >= 3)
+      if (DBIc_DBISTATE(imp_dbh)->debug >= 3) {
         PerlIO_printf(DBIc_LOGPIO(imp_dbh),
             "    syb_db_STORE() -> syb_chained_txn => %d\n", on);
+      }
       if (!autocommit && imp_dbh->optSupported) {
         CS_BOOL value = on ? CS_TRUE : CS_FALSE;
         CS_RETCODE ret;
         ret = syb_set_options(imp_dbh, CS_SET, CS_OPT_CHAINXACTS,
             &value, CS_UNUSED, NULL);
-        if (DBIc_DBISTATE(imp_dbh)->debug >= 3)
+        if (DBIc_DBISTATE(imp_dbh)->debug >= 3) {
           PerlIO_printf(
               DBIc_LOGPIO(imp_dbh),
               "    syb_db_STORE() -> syb_chained_txn AutoCommit off CS_OPT_CHAINXACTS(%d) => %d\n",
               value, ret);
+        }
       }
 
     } else {
@@ -2206,9 +2243,10 @@ int syb_db_STORE_attrib(SV *dbh, imp_dbh_t *imp_dbh, SV *keysv, SV *valuesv) {
      * as that inhibits the setting of the autocommit variable anyway.
      */
     if (imp_dbh->imp_sth && imp_dbh->imp_sth->bcpFlag) {
-      if (DBIc_DBISTATE(imp_dbh)->debug >= 3)
+      if (DBIc_DBISTATE(imp_dbh)->debug >= 3) {
         PerlIO_printf(DBIc_LOGPIO(imp_dbh),
             "    syb_db_STORE(): AutoCommit value changes inhibitted during BCP ops\n");
+      }
       return TRUE;
     }
 
@@ -2458,37 +2496,42 @@ SV *syb_db_FETCH_attrib(SV *dbh, imp_dbh_t *imp_dbh, SV *keysv) {
   SV *retsv = NULL;
 
   if (kl == 10 && strEQ(key, "AutoCommit")) {
-    if (DBIc_is(imp_dbh, DBIcf_AutoCommit))
+    if (DBIc_is(imp_dbh, DBIcf_AutoCommit)) {
       retsv = newSViv(1);
-    else
+    } else {
       retsv = newSViv(0);
+    }
   }
   if (kl == 11 && strEQ(key, "LongTruncOK")) {
-    if (DBIc_is(imp_dbh, DBIcf_LongTruncOk))
+    if (DBIc_is(imp_dbh, DBIcf_LongTruncOk)) {
       retsv = newSViv(1);
-    else
+    } else {
       retsv = newSViv(0);
+    }
   }
   if (kl == 11 && strEQ(key, "LongReadLen")) {
     retsv = newSViv(DBIc_LongReadLen(imp_dbh));
   }
   if (kl == 12 && strEQ(key, "syb_show_sql")) {
-    if (imp_dbh->showSql)
+    if (imp_dbh->showSql) {
       retsv = newSViv(1);
-    else
+    } else {
       retsv = newSViv(0);
+    }
   }
   if (kl == 12 && strEQ(key, "syb_show_eed")) {
-    if (imp_dbh->showEed)
+    if (imp_dbh->showEed) {
       retsv = newSViv(1);
-    else
+    } else {
       retsv = newSViv(0);
+    }
   }
   if (kl == 8 && strEQ(key, "syb_dead")) {
-    if (imp_dbh->isDead)
+    if (imp_dbh->isDead) {
       retsv = newSViv(1);
-    else
+    } else {
       retsv = newSViv(0);
+    }
   }
   if (kl == 15 && strEQ(key, "syb_err_handler")) {
     if (imp_dbh->err_handler) {
@@ -2512,10 +2555,11 @@ SV *syb_db_FETCH_attrib(SV *dbh, imp_dbh_t *imp_dbh, SV *keysv) {
     }
   }
   if (kl == 15 && strEQ(key, "syb_chained_txn")) {
-    if (imp_dbh->doRealTran)
+    if (imp_dbh->doRealTran) {
       retsv = newSViv(0);
-    else
+    } else {
       retsv = newSViv(1);
+    }
   }
   if (kl == 18 && strEQ(key, "syb_check_tranmode")) {
     CS_INT value;
@@ -2523,31 +2567,35 @@ SV *syb_db_FETCH_attrib(SV *dbh, imp_dbh_t *imp_dbh, SV *keysv) {
 
     ret = syb_set_options(imp_dbh, CS_GET, CS_OPT_CHAINXACTS, &value,
         CS_UNUSED, NULL);
-    if (ret != CS_SUCCEED)
+    if (ret != CS_SUCCEED) {
       value = 0;
+    }
     retsv = newSViv(value);
   }
   if (kl == 16 && strEQ(key, "syb_flush_finish")) {
-    if (imp_dbh->flushFinish)
+    if (imp_dbh->flushFinish) {
       retsv = newSViv(1);
-    else
+    } else {
       retsv = newSViv(0);
+    }
   }
   if (kl == 21 && strEQ(key, "syb_dynamic_supported")) {
     CS_BOOL val;
     CS_RETCODE ret = ct_capability(imp_dbh->connection, CS_GET,
         CS_CAP_REQUEST, CS_REQ_DYN, (CS_VOID*) &val);
-    if (ret != CS_SUCCEED || val == CS_FALSE)
+    if (ret != CS_SUCCEED || val == CS_FALSE) {
       retsv = newSViv(0);
-    else
+    } else {
       retsv = newSViv(1);
+    }
   }
 
   if (kl == 21 && strEQ(key, "syb_quoted_identifier")) {
-    if (imp_dbh->quotedIdentifier)
+    if (imp_dbh->quotedIdentifier) {
       retsv = newSViv(1);
-    else
+    } else {
       retsv = newSViv(0);
+    }
   }
   if (kl == 12 && strEQ(key, "syb_rowcount")) {
     retsv = newSViv(imp_dbh->rowcount);
@@ -2560,16 +2608,18 @@ SV *syb_db_FETCH_attrib(SV *dbh, imp_dbh_t *imp_dbh, SV *keysv) {
     retsv = newSViv(imp_dbh->doProcStatus);
   }
   if (kl == 14 && strEQ(key, "syb_use_bin_0x")) {
-    if (imp_dbh->useBin0x)
+    if (imp_dbh->useBin0x) {
       retsv = newSViv(1);
-    else
+    } else {
       retsv = newSViv(0);
+    }
   }
   if (kl == 17 && strEQ(key, "syb_binary_images")) {
-    if (imp_dbh->binaryImage)
+    if (imp_dbh->binaryImage) {
       retsv = newSViv(1);
-    else
+    } else {
       retsv = newSViv(0);
+    }
   }
   if (kl == 18 && strEQ(key, "syb_deadlock_retry")) {
     retsv = newSViv(imp_dbh->deadlockRetry);
@@ -2619,9 +2669,9 @@ SV *syb_db_FETCH_attrib(SV *dbh, imp_dbh_t *imp_dbh, SV *keysv) {
 #endif
   }
 
-  if (retsv == &PL_sv_yes || retsv == &PL_sv_no || retsv == &PL_sv_undef)
+  if (retsv == &PL_sv_yes || retsv == &PL_sv_no || retsv == &PL_sv_undef) {
     return retsv;
-
+  }
   return sv_2mortal(retsv);
 }
 
@@ -2678,7 +2728,6 @@ static void dbd_preparse(imp_sth_t *imp_sth, char *statement) {
   }
   if (!strncasecmp(src, "exec", 4)) {
     imp_sth->type = 1;
-
   } else if (imp_sth->bcpFlag) {
     imp_sth->type = 2;
   } else {
@@ -3113,8 +3162,9 @@ static CS_RETCODE describe(SV* sth, imp_sth_t* imp_sth, int restype) {
     imp_sth->numCols = 0;
     goto GoodBye;
   }
-  if(DBIc_DBISTATE(imp_dbh)->debug >= 3)
+  if(DBIc_DBISTATE(imp_dbh)->debug >= 3) {
     PerlIO_printf(DBIc_LOGPIO(imp_dbh), "    ct_res_info() returns %d columns\n", numCols);
+  }
 
   /* According to Tim Bunce I shouldn't need the code below.
    However, if I remove it DBD::Sybase segfaults in some situations
@@ -3159,8 +3209,9 @@ static CS_RETCODE describe(SV* sth, imp_sth_t* imp_sth, int restype) {
       goto GoodBye;
     }
     /* Make sure we have at least some sort of column name: */
-    if(imp_sth->datafmt[i].namelen == 0)
+    if(imp_sth->datafmt[i].namelen == 0) {
       sprintf(imp_sth->datafmt[i].name, "COL(%d)", i + 1);
+    }
     if(restype == CS_COMPUTE_RESULT) {
       CS_INT agg_op, outlen;
       CS_CHAR* agg_op_name;
@@ -3177,9 +3228,10 @@ static CS_RETCODE describe(SV* sth, imp_sth_t* imp_sth, int restype) {
       sprintf(imp_sth->datafmt[i].name, "%s(%d)", agg_op_name, agg_op);
     }
 
-    if(DBIc_DBISTATE(imp_dbh)->debug >= 4)
+    if(DBIc_DBISTATE(imp_dbh)->debug >= 4) {
       PerlIO_printf(DBIc_LOGPIO(imp_dbh), "    ct_describe(%d): type = %d, maxlen = %d\n", i,
           imp_sth->datafmt[i].datatype, imp_sth->datafmt[i].maxlength);
+    }
 
     imp_sth->coldata[i].realType = imp_sth->datafmt[i].datatype;
     imp_sth->coldata[i].realLength = imp_sth->datafmt[i].maxlength;
@@ -3254,9 +3306,9 @@ static CS_RETCODE describe(SV* sth, imp_sth_t* imp_sth, int restype) {
 #endif
       New(902, imp_sth->coldata[i].value.c, imp_sth->datafmt[i].maxlength, char);
       imp_sth->datafmt[i].format = CS_FMT_UNUSED; /*CS_FMT_NULLTERM;*/
-      if(imp_dbh->binaryImage)
+      if(imp_dbh->binaryImage) {
         imp_sth->coldata[i].type = imp_sth->datafmt[i].datatype;
-      else {
+      } else {
         imp_sth->coldata[i].type = CS_TEXT_TYPE;
         imp_sth->datafmt[i].datatype = CS_TEXT_TYPE;
       }
@@ -3324,9 +3376,10 @@ static CS_RETCODE describe(SV* sth, imp_sth_t* imp_sth, int restype) {
       cleanUp(imp_sth);
       break;
     }
-    if(DBIc_DBISTATE(imp_dbh)->debug >= 3)
+    if(DBIc_DBISTATE(imp_dbh)->debug >= 3) {
       PerlIO_printf(DBIc_LOGPIO(imp_dbh), "    describe() -> col %d, type %d, realtype %d\n", i,
           imp_sth->coldata[i].type, imp_sth->coldata[i].realType);
+    }
   }
 GoodBye:;
   if(retcode == CS_SUCCEED) {
@@ -3338,17 +3391,19 @@ GoodBye:;
 static void clear_sth_flags(SV *sth, imp_sth_t *imp_sth) {
   D_imp_dbh_from_sth;
 
-  if (DBIc_DBISTATE(imp_dbh)->debug >= 3)
+  if (DBIc_DBISTATE(imp_dbh)->debug >= 3) {
     PerlIO_printf(
         DBIc_LOGPIO(imp_dbh),
         "    clear_sth_flags() -> resetting ACTIVE, moreResults, dyn_execed, exec_done\n");
+  }
   imp_sth->moreResults = 0;
   imp_sth->dyn_execed = 0;
   imp_sth->exec_done = 0;
   if (!imp_sth->connection) {
-    if (DBIc_DBISTATE(imp_dbh)->debug >= 3)
+    if (DBIc_DBISTATE(imp_dbh)->debug >= 3) {
       PerlIO_printf(DBIc_LOGPIO(imp_dbh),
           "    clear_sth_flags() -> reset inUse flag\n");
+    }
     imp_dbh->inUse = 0;
   }
 }
@@ -3364,13 +3419,15 @@ static int st_next_result(SV *sth, imp_sth_t *imp_sth) {
   imp_sth->numRows = -1;
 
   while ((retcode = ct_results(cmd, &restype)) == CS_SUCCEED) {
-    if (DBIc_DBISTATE(imp_dbh)->debug >= 3)
+    if (DBIc_DBISTATE(imp_dbh)->debug >= 3) {
       PerlIO_printf(DBIc_LOGPIO(imp_dbh),
           "    st_next_result() -> ct_results(%d) == %d\n", restype,
           retcode);
+    }
 
-    if (restype == CS_CMD_FAIL)
+    if (restype == CS_CMD_FAIL) {
       failFlag = 1;
+    }
     if ((restype == CS_CMD_DONE || restype == CS_CMD_SUCCEED) && !failFlag) {
       ct_res_info(cmd, CS_ROW_COUNT, &imp_sth->numRows, CS_UNUSED, NULL);
     }
@@ -3385,9 +3442,10 @@ static int st_next_result(SV *sth, imp_sth_t *imp_sth) {
         clear_cache(sth, imp_sth);
       }
       retcode = describe(sth, imp_sth, restype);
-      if (DBIc_DBISTATE(imp_dbh)->debug >= 3)
+      if (DBIc_DBISTATE(imp_dbh)->debug >= 3) {
         PerlIO_printf(DBIc_LOGPIO(imp_dbh),
             "describe() retcode = %d\n", retcode);
+      }
 
       if (restype == CS_STATUS_RESULT && (imp_sth->doProcStatus
           || (imp_sth->dyn_execed && imp_sth->type == 0))) {
@@ -3396,10 +3454,11 @@ static int st_next_result(SV *sth, imp_sth_t *imp_sth) {
             &rows_read);
         if (retcode == CS_SUCCEED) {
           imp_sth->lastProcStatus = imp_sth->coldata[0].value.i;
-          if (DBIc_DBISTATE(imp_dbh)->debug >= 3)
+          if (DBIc_DBISTATE(imp_dbh)->debug >= 3) {
             PerlIO_printf(DBIc_LOGPIO(imp_dbh),
                 "describe() proc status code = %d\n",
                 imp_sth->lastProcStatus);
+          }
           if (imp_sth->lastProcStatus != 0) {
             failFlag = 2;
           }
@@ -3408,29 +3467,33 @@ static int st_next_result(SV *sth, imp_sth_t *imp_sth) {
         }
         while ((retcode = ct_fetch(cmd, CS_UNUSED, CS_UNUSED,
             CS_UNUSED, &rows_read))) {
-          if (retcode == CS_END_DATA || retcode == CS_FAIL)
+          if (retcode == CS_END_DATA || retcode == CS_FAIL) {
             break;
+          }
         }
-      } else
+      } else {
         goto Done;
+      }
       /* exit from the ct_results() loop here if we
        are *NOT* in doProcStatus mode, and this is
        *NOT* a status result set */
     }
   }
-  if (DBIc_DBISTATE(imp_dbh)->debug >= 3)
+  if (DBIc_DBISTATE(imp_dbh)->debug >= 3) {
     PerlIO_printf(DBIc_LOGPIO(imp_dbh),
         "ct_results(%d) final retcode = %d\n", restype, retcode);
+  }
   Done:
 
   /* The lasterr/lastsev is a hack to work around Sybase OpenClient, which
    does NOT return CS_CMD_FAIL for constraint errors when
    inserting/updating data using ?-style placeholders. */
 
-  if (DBIc_DBISTATE(imp_dbh)->debug >= 3)
+  if (DBIc_DBISTATE(imp_dbh)->debug >= 3) {
     PerlIO_printf(DBIc_LOGPIO(imp_dbh),
         "    st_next_result() -> lasterr = %d, lastsev = %d\n",
         imp_dbh->lasterr, imp_dbh->lastsev);
+  }
 
   /* Only force a failure if there are no rows to be fetched (ie on a
    normal insert/update/delete operation */
@@ -3440,14 +3503,16 @@ static int st_next_result(SV *sth, imp_sth_t *imp_sth) {
         && restype != CS_CURSOR_RESULT && restype != CS_COMPUTE_RESULT)) {
 
       failFlag = 3;
-      if (DBIc_DBISTATE(imp_dbh)->debug >= 3)
+      if (DBIc_DBISTATE(imp_dbh)->debug >= 3) {
         PerlIO_printf(
             DBIc_LOGPIO(imp_dbh),
             "    st_next_result() -> restype is not data result or syb_cancel_request_on_error is TRUE, force failFlag\n");
+      }
     } else {
-      if (DBIc_DBISTATE(imp_dbh)->debug >= 3)
+      if (DBIc_DBISTATE(imp_dbh)->debug >= 3) {
         PerlIO_printf(DBIc_LOGPIO(imp_dbh),
             "    st_next_result() -> restype is data result, do NOT force failFlag\n");
+      }
     }
   }
 
@@ -3458,21 +3523,24 @@ static int st_next_result(SV *sth, imp_sth_t *imp_sth) {
   /* XXX */
   if (failFlag && (restype != CS_CMD_DONE && restype != CS_CMD_FAIL)
       && retcode != CS_FAIL) {
-    if (DBIc_DBISTATE(imp_dbh)->debug >= 3)
+    if (DBIc_DBISTATE(imp_dbh)->debug >= 3) {
       PerlIO_printf(DBIc_LOGPIO(imp_dbh),
           "    st_next_result() -> failFlag set - clear request\n");
+    }
     syb_st_finish(sth, imp_sth);
   }
 
   /* FreeTDS added a result code CS_END_RESULTS */
   /* Do the right thing with it Frederick Staats, 6/26/03 */
-  if (retcode == CS_END_RESULTS)
+  if (retcode == CS_END_RESULTS) {
     restype = CS_CMD_DONE;
+  }
 
   if (failFlag || retcode == CS_FAIL || retcode == CS_CANCELED) {
-    if (DBIc_DBISTATE(imp_dbh)->debug >= 3)
+    if (DBIc_DBISTATE(imp_dbh)->debug >= 3) {
       PerlIO_printf(DBIc_LOGPIO(imp_dbh),
           "    st_next_result() -> force CS_CMD_FAIL return\n");
+    }
     restype = CS_CMD_FAIL;
   }
 
@@ -3481,11 +3549,12 @@ static int st_next_result(SV *sth, imp_sth_t *imp_sth) {
   /* clear the handle here - to be sure to always have a consistent 
    handle view after command completion. */
   if (restype == CS_CMD_DONE || restype == CS_CMD_FAIL) {
-    if (DBIc_DBISTATE(imp_dbh)->debug >= 3)
+    if (DBIc_DBISTATE(imp_dbh)->debug >= 3) {
       PerlIO_printf(
           DBIc_LOGPIO(imp_dbh),
           "    st_next_result() -> got %s: resetting ACTIVE, moreResults, dyn_execed, exec_done\n",
           restype == CS_CMD_DONE ? "CS_CMD_DONE" : "CS_CMD_FAIL");
+    }
     clear_sth_flags(sth, imp_sth);
     DBIc_ACTIVE_off(imp_sth);
   } else {
@@ -3511,9 +3580,10 @@ static int _convert(void *ptr, char *str, CS_LOCALE *locale,
   retcode = cs_convert(context, &srcfmt, str, datafmt, ptr, &reslen);
 
   /* FIXME - DBIS slow in threaded mode */
-  if (DBIS->debug >= 3 && retcode != CS_SUCCEED || reslen == CS_UNUSED)
+  if (DBIS->debug >= 3 && retcode != CS_SUCCEED || reslen == CS_UNUSED) {
     PerlIO_printf(DBILOGFP, "cs_convert failed (_convert(%s, %d))", str,
         datafmt->datatype);
+  }
 
   if (len) {
     *len = reslen;
@@ -3531,18 +3601,20 @@ static CS_RETCODE get_cs_msg(CS_CONTEXT *context, CS_CONNECTION *connection,
 
   memset((void*) &errmsg, 0, sizeof(CS_CLIENTMSG));
   ret = cs_diag(context, CS_STATUS, CS_CLIENTMSG_TYPE, CS_UNUSED, &lastmsg);
-  if (DBIc_DBISTATE(imp_sth)->debug >= 4)
+  if (DBIc_DBISTATE(imp_sth)->debug >= 4) {
     PerlIO_printf(DBIc_LOGPIO(imp_sth),
         "get_cs_msg -> cs_diag(CS_STATUS): lastmsg = %d (ret = %d)\n",
         lastmsg, ret);
+  }
   if (ret != CS_SUCCEED) {
     warn("cs_diag(CS_STATUS) failed");
     return ret;
   }
   ret = cs_diag(context, CS_GET, CS_CLIENTMSG_TYPE, lastmsg, &errmsg);
-  if (DBIc_DBISTATE(imp_sth)->debug >= 4)
+  if (DBIc_DBISTATE(imp_sth)->debug >= 4) {
     PerlIO_printf(DBIc_LOGPIO(imp_sth),
         "get_cs_msg -> cs_diag(CS_GET) ret = %d\n", ret);
+  }
   if (ret != CS_SUCCEED) {
     warn("cs_diag(CS_GET) failed");
     return ret;
@@ -3564,18 +3636,21 @@ static CS_RETCODE get_cs_msg(CS_CONTEXT *context, CS_CONNECTION *connection,
     XPUSHs(sv_2mortal(newSViv(CS_SEVERITY(errmsg.msgnumber))));
     XPUSHs(sv_2mortal(newSViv(CS_NUMBER(errmsg.msgnumber))));
     XPUSHs(sv_2mortal(newSVpv(errmsg.msgstring, 0)));
-    if (errmsg.osstringlen > 0)
+    if (errmsg.osstringlen > 0) {
       XPUSHs(sv_2mortal(newSVpv(errmsg.osstring, 0)));
-    else
+    } else {
       XPUSHs(&PL_sv_undef);
-    if (msg)
+    }
+    if (msg) {
       XPUSHs(sv_2mortal(newSVpv(msg, 0)));
-    else
+    } else {
       XPUSHs(&PL_sv_undef);
+    }
 
     PUTBACK;
-    if ((count = perl_call_sv(cslib_cb, G_SCALAR)) != 1)
+    if ((count = perl_call_sv(cslib_cb, G_SCALAR)) != 1) {
       croak("A cslib handler cannot return a LIST");
+    }
     SPAGAIN;
     retval = POPi;
 
@@ -3706,8 +3781,9 @@ static int syb_blk_execute(imp_dbh_t *imp_dbh, imp_sth_t *imp_sth, SV *sth) {
 
 #if !defined(USE_CSLIB_CB)
   if (cs_diag(context, CS_CLEAR, CS_CLIENTMSG_TYPE, CS_UNUSED, NULL)
-      != CS_SUCCEED)
+      != CS_SUCCEED) {
     warn("cs_diag(CS_CLEAR) failed");
+  }
 #endif
 
   for (i = 0; i < imp_sth->numCols; ++i) {
@@ -3720,8 +3796,9 @@ static int syb_blk_execute(imp_dbh_t *imp_dbh, imp_sth_t *imp_sth, SV *sth) {
       imp_sth->coldata[i].indicator = 0;
       ptr = "";
       imp_sth->coldata[i].valuelen = 0;
-      if (!imp_sth->bcpIdentityFlag && imp_sth->bcpIdentityCol == i + 1)
+      if (!imp_sth->bcpIdentityFlag && imp_sth->bcpIdentityCol == i + 1) {
         continue;
+      }
     } else {
       imp_sth->coldata[i].ptr = SvPV(phs->sv, slen);
       imp_sth->coldata[i].indicator = 0;
@@ -3782,8 +3859,9 @@ static int syb_blk_execute(imp_dbh_t *imp_dbh, imp_sth_t *imp_sth, SV *sth) {
               i + 1, (char *) imp_sth->coldata[i].ptr,
               phs->datafmt.datatype);
           ret = get_cs_msg(context, con, msg, sth, imp_sth);
-          if (ret == CS_FAIL)
+          if (ret == CS_FAIL) {
             goto FAIL;
+          }
 #else
           warn("cs_convert failed: column %d: (_convert(%s, %d))",
               i + 1, imp_sth->coldata[i].ptr, phs->datafmt.datatype);
@@ -3799,20 +3877,24 @@ static int syb_blk_execute(imp_dbh_t *imp_dbh, imp_sth_t *imp_sth, SV *sth) {
     }
     ret = blk_bind(imp_sth->bcp_desc, i + 1, &phs->datafmt, ptr,
         &imp_sth->coldata[i].valuelen, &imp_sth->coldata[i].indicator);
-    if (DBIc_DBISTATE(imp_dbh)->debug >= 5)
+    if (DBIc_DBISTATE(imp_dbh)->debug >= 5) {
       PerlIO_printf(DBIc_LOGPIO(imp_dbh),
           "blk_bind %d -> '%s' (ret = %d)\n", i + 1,
           imp_sth->coldata[i].ptr, ret);
-    if (ret != CS_SUCCEED)
+    }
+    if (ret != CS_SUCCEED) {
       goto FAIL;
+    }
   }
 
   ret = blk_rowxfer(imp_sth->bcp_desc);
-  if (DBIc_DBISTATE(imp_dbh)->debug >= 3)
+  if (DBIc_DBISTATE(imp_dbh)->debug >= 3) {
     PerlIO_printf(DBIc_LOGPIO(imp_dbh), "blk_rowxfer() -> %d\n", ret);
+  }
 
-  if (ret == CS_SUCCEED)
+  if (ret == CS_SUCCEED) {
     imp_sth->bcpRows++;
+  }
 
   FAIL: ;
   return (ret == CS_SUCCEED ? -1 : -2);
@@ -3832,34 +3914,39 @@ static int cmd_execute(SV *sth, imp_sth_t *imp_sth) {
     }
     if (ct_command(imp_sth->cmd, CS_LANG_CMD, imp_sth->statement,
         CS_NULLTERM, CS_UNUSED) != CS_SUCCEED) {
-      if (DBIc_DBISTATE(imp_dbh)->debug >= 3)
+      if (DBIc_DBISTATE(imp_dbh)->debug >= 3) {
         PerlIO_printf(
             DBIc_LOGPIO(imp_dbh),
             "    cmd_execute() -> ct_command() failed (cmd=%x, statement=%s, imp_sth=%x)\n",
             imp_sth->cmd, imp_sth->statement, imp_sth);
+      }
       return -2;
     }
-    if (DBIc_DBISTATE(imp_dbh)->debug >= 3)
+    if (DBIc_DBISTATE(imp_dbh)->debug >= 3) {
       PerlIO_printf(DBIc_LOGPIO(imp_dbh),
           "    cmd_execute() -> ct_command() OK\n");
+    }
   }
 
   if (ct_send(imp_sth->cmd) != CS_SUCCEED) {
-    if (DBIc_DBISTATE(imp_dbh)->debug >= 3)
+    if (DBIc_DBISTATE(imp_dbh)->debug >= 3) {
       PerlIO_printf(DBIc_LOGPIO(imp_dbh),
           "    cmd_execute() -> ct_send() failed\n");
+    }
 
     return -2;
   }
-  if (DBIc_DBISTATE(imp_dbh)->debug >= 3)
+  if (DBIc_DBISTATE(imp_dbh)->debug >= 3) {
     PerlIO_printf(DBIc_LOGPIO(imp_dbh),
         "    cmd_execute() -> ct_send() OK\n");
+  }
 
   imp_sth->exec_done = 1;
   if (!imp_sth->connection) {
-    if (DBIc_DBISTATE(imp_dbh)->debug >= 3)
+    if (DBIc_DBISTATE(imp_dbh)->debug >= 3) {
       PerlIO_printf(DBIc_LOGPIO(imp_dbh),
           "    cmd_execute() -> set inUse flag\n");
+    }
     imp_dbh->inUse = 1;
   }
 
@@ -3906,8 +3993,9 @@ int syb_st_execute(SV *sth, imp_sth_t *imp_sth) {
       sprintf(namebuf, ":p%d", i);
       namelen = strlen(namebuf);
       phs_svp = hv_fetch(imp_sth->all_params_hv, namebuf, namelen, 0);
-      if (phs_svp == NULL)
+      if (phs_svp == NULL) {
         croak("Can't bind unknown placeholder '%s'", namebuf);
+      }
       phs = (phs_t*) SvPVX(*phs_svp); /* placeholder struct	*/
 
       /* if the parameter is an output and it is bound as an inout,
@@ -3942,8 +4030,9 @@ int syb_st_execute(SV *sth, imp_sth_t *imp_sth) {
             CS_DATAFMT datafmt;
             phs = params[i].phs;
             /* find the maxlenght through ct_describe */ 
-            if( ct_describe(imp_sth->cmd, i+1, &datafmt) != CS_SUCCEED)
+            if( ct_describe(imp_sth->cmd, i+1, &datafmt) != CS_SUCCEED) {
               croak("ct_describe() failed");
+            }
 
             phs->datafmt.maxlength = datafmt.maxlength;
 
@@ -3973,8 +4062,9 @@ int syb_st_execute(SV *sth, imp_sth_t *imp_sth) {
 
   restype = st_next_result(sth, imp_sth);
 
-  if (restype == CS_CMD_FAIL)
+  if (restype == CS_CMD_FAIL) {
     return -2;
+  }
 
   return imp_sth->numRows;
 }
@@ -3984,9 +4074,10 @@ int syb_st_cancel(SV *sth, imp_sth_t *imp_sth) {
   CS_CONNECTION *connection = imp_sth->connection ? imp_sth->connection
       : imp_dbh->connection;
 
-  if (DBIc_DBISTATE(imp_dbh)->debug >= 3)
+  if (DBIc_DBISTATE(imp_dbh)->debug >= 3) {
     PerlIO_printf(DBIc_LOGPIO(imp_dbh),
         "    syb_st_cancel() -> ct_cancel(CS_CANCEL_ATTN)\n");
+  }
 
   if (ct_cancel(connection, NULL, CS_CANCEL_ATTN) == CS_FAIL) {
     ct_close(connection, CS_FORCE_CLOSE);
@@ -4073,8 +4164,7 @@ AV * syb_st_fetch(SV *sth, imp_sth_t *imp_sth) {
   ** Find out how many columns there are in this result set.
   */
   retcode = ct_res_info(cmd, CS_NUMDATA, &num_fields, CS_UNUSED, NULL);
-  if (retcode != CS_SUCCEED)
-  {
+  if (retcode != CS_SUCCEED) {
     croak("    syb_st_fetch(): ct_res_info() failed");
   }
 
@@ -4133,8 +4223,9 @@ AV * syb_st_fetch(SV *sth, imp_sth_t *imp_sth) {
               && ChopBlanks) {
             char *p = SvEND(sv);
             int len = SvCUR(sv);
-            while (len && *--p == ' ')
+            while (len && *--p == ' ') {
               --len;
+            }
             if (len != SvCUR(sv)) {
               SvCUR_set(sv, len);
               *SvEND(sv) = '\0';
@@ -4231,9 +4322,10 @@ AV * syb_st_fetch(SV *sth, imp_sth_t *imp_sth) {
    result sets */
 
     restype = st_next_result(sth, imp_sth);
-    if (DBIc_DBISTATE(imp_dbh)->debug >= 3)
+    if (DBIc_DBISTATE(imp_dbh)->debug >= 3) {
       PerlIO_printf(DBIc_LOGPIO(imp_dbh),
           "    syb_st_fetch() -> st_next_results() == %d\n", restype);
+    }
 
     if (restype == CS_CMD_DONE || restype == CS_CMD_FAIL) {
       return Nullav;
@@ -4279,8 +4371,9 @@ AV * syb_st_fetch(SV *sth, imp_sth_t *imp_sth) {
     XPUSHs(sv_2mortal(newRV((SV*) av)));
 
     PUTBACK;
-    if ((count = perl_call_sv(imp_dbh->row_cb, G_SCALAR)) != 1)
+    if ((count = perl_call_sv(imp_dbh->row_cb, G_SCALAR)) != 1) {
       croak("An error handler can't return a LIST.");
+    }
     SPAGAIN;
     retval = POPi;
 
@@ -4290,8 +4383,9 @@ AV * syb_st_fetch(SV *sth, imp_sth_t *imp_sth) {
 
     /* If the called sub returns 0 then we don't return the result set
      to the caller, so instead try to fetch the next row... */
-    if (retval == 0)
+    if (retval == 0) {
       goto TryAgain;
+    }
   }
 
   return av;
@@ -4300,8 +4394,9 @@ AV * syb_st_fetch(SV *sth, imp_sth_t *imp_sth) {
 #if defined(DBD_CAN_HANDLE_UTF8)
 static int is_high_bit_set(const unsigned char *val, STRLEN size)
 {
-  while (*val && size--)
-  if (*val++ & 0x80) return 1;
+  while (*val && size--) {
+    if (*val++ & 0x80) return 1;
+  }
   return 0;
 }
 #endif
@@ -4313,9 +4408,10 @@ static int sth_blk_finish(imp_dbh_t *imp_dbh, imp_sth_t *imp_sth, SV *sth)
 }
 #else
 static int sth_blk_finish(imp_dbh_t *imp_dbh, imp_sth_t *imp_sth, SV *sth) {
-  if (DBIc_DBISTATE(imp_dbh)->debug >= 3)
+  if (DBIc_DBISTATE(imp_dbh)->debug >= 3) {
     PerlIO_printf(DBIc_LOGPIO(imp_dbh),
         "    sth_blk_finish() -> Checking for pending rows\n");
+  }
   /* If there are any pending rows they should be rolled back, based
    on the principle that only *explicitly* commited data should be
    kept. */
@@ -4363,9 +4459,10 @@ int syb_st_finish(SV *sth, imp_sth_t *imp_sth) {
   /* It is believed that the fixes applied to st_next_result() makes the
    imp_dbh->lasterr check unnecessary */
   if (imp_dbh->flushFinish) {
-    if (DBIc_DBISTATE(imp_dbh)->debug >= 3)
+    if (DBIc_DBISTATE(imp_dbh)->debug >= 3) {
       PerlIO_printf(DBIc_LOGPIO(imp_dbh),
           "    syb_st_finish() -> flushing\n");
+    }
     DBIh_CLEAR_ERROR(imp_sth); /* so syb_st_fetch can tell us when something goes wrong */
     while (DBIc_ACTIVE(imp_sth) && !imp_dbh->isDead && imp_sth->exec_done
         && !SvTRUE(DBIc_ERR(imp_sth))) {
@@ -4377,16 +4474,18 @@ int syb_st_finish(SV *sth, imp_sth_t *imp_sth) {
   } else {
     if (DBIc_ACTIVE(imp_sth)) {
 #if defined(ROGUE)
-      if(DBIc_DBISTATE(imp_dbh)->debug >= 3)
-      PerlIO_printf(DBIc_LOGPIO(imp_dbh), "    syb_st_finish() -> ct_cancel(CS_CANCEL_CURRENT)\n");
+      if (DBIc_DBISTATE(imp_dbh)->debug >= 3) {
+        PerlIO_printf(DBIc_LOGPIO(imp_dbh), "    syb_st_finish() -> ct_cancel(CS_CANCEL_CURRENT)\n");
+      }
       if(ct_cancel(NULL, imp_sth->cmd, CS_CANCEL_CURRENT) == CS_FAIL) {
         ct_close(connection, CS_FORCE_CLOSE);
         imp_dbh->isDead = 1;
       }
 #else  
-      if (DBIc_DBISTATE(imp_dbh)->debug >= 3)
+      if (DBIc_DBISTATE(imp_dbh)->debug >= 3) {
         PerlIO_printf(DBIc_LOGPIO(imp_dbh),
             "    syb_st_finish() -> ct_cancel(CS_CANCEL_ALL)\n");
+      }
       if (ct_cancel(connection, NULL, CS_CANCEL_ALL) == CS_FAIL) {
         ct_close(connection, CS_FORCE_CLOSE);
         imp_dbh->isDead = 1;
@@ -4404,32 +4503,36 @@ static void dealloc_dynamic(imp_sth_t *imp_sth) {
   CS_RETCODE ret;
   CS_INT restype;
 
-  if (DBIc_DBISTATE(imp_sth)->debug >= 3)
+  if (DBIc_DBISTATE(imp_sth)->debug >= 3) {
     PerlIO_printf(DBIc_LOGPIO(imp_sth),
         "    dealloc_dynamic: ct_dynamic(CS_DEALLOC) for %s\n",
         imp_sth->dyn_id);
+  }
 
   ret = ct_dynamic(imp_sth->cmd, CS_DEALLOC, imp_sth->dyn_id, CS_NULLTERM,
       NULL, CS_UNUSED);
   if (ret != CS_SUCCEED) {
-    if (DBIc_DBISTATE(imp_sth)->debug >= 3)
+    if (DBIc_DBISTATE(imp_sth)->debug >= 3) {
       PerlIO_printf(
           DBIc_LOGPIO(imp_sth),
           "    dealloc_dynamic: ct_dynamic(CS_DEALLOC) for %s FAILED\n",
           imp_sth->dyn_id);
+    }
     return;
   }
   ret = ct_send(imp_sth->cmd);
   if (ret != CS_SUCCEED) {
-    if (DBIc_DBISTATE(imp_sth)->debug >= 3)
+    if (DBIc_DBISTATE(imp_sth)->debug >= 3) {
       PerlIO_printf(DBIc_LOGPIO(imp_sth),
           "    dealloc_dynamic: ct_send(CS_DEALLOC) for %s FAILED\n",
           imp_sth->dyn_id);
+    }
     return;
   }
 
-  while (ct_results(imp_sth->cmd, &restype) == CS_SUCCEED)
+  while (ct_results(imp_sth->cmd, &restype) == CS_SUCCEED) {
     ;
+  }
 
   if (imp_sth->all_params_hv) {
     HV *hv = imp_sth->all_params_hv;
@@ -4446,8 +4549,9 @@ static void dealloc_dynamic(imp_sth_t *imp_sth) {
     sv_free((SV*) imp_sth->all_params_hv);
   }
 
-  if (imp_sth->out_params_av)
+  if (imp_sth->out_params_av) {
     sv_free((SV*) imp_sth->out_params_av);
+  }
 
   imp_sth->all_params_hv = NULL;
   imp_sth->out_params_av = NULL;
@@ -4458,22 +4562,25 @@ void syb_st_destroy(SV *sth, imp_sth_t *imp_sth) {
   CS_RETCODE ret;
   dTHX;
 
-  if (DBIc_DBISTATE(imp_dbh)->debug >= 3)
+  if (DBIc_DBISTATE(imp_dbh)->debug >= 3) {
     PerlIO_printf(DBIc_LOGPIO(imp_dbh),
         "    syb_st_destroy: called on %x...\n", imp_sth);
+  }
 
   if (PL_dirty) {
     DBIc_IMPSET_off(imp_sth); /* let DBI know we've done it	*/
-    if (DBIc_DBISTATE(imp_dbh)->debug >= 3)
+    if (DBIc_DBISTATE(imp_dbh)->debug >= 3) {
       PerlIO_printf(DBIc_LOGPIO(imp_dbh),
           "    syb_st_destroy: dirty set, skipping\n");
+    }
     return;
   }
 
-  if (DBIc_ACTIVE(imp_dbh))
+  if (DBIc_ACTIVE(imp_dbh)) {
     if (!strncmp(imp_sth->dyn_id, "DBD", 3)) {
       dealloc_dynamic(imp_sth);
     }
+  }
 
   /* moved from the prepare() call - as we need to have this around
    to re-execute non-dynamic statements... */
@@ -4493,9 +4600,10 @@ void syb_st_destroy(SV *sth, imp_sth_t *imp_sth) {
     /* Gene Ressler says that this call can fail because we've already 
      dropped the connection. I'm not sure if this is really a problem
      or if it can be ignored. XXX */
-    if (DBIc_DBISTATE(imp_dbh)->debug >= 4)
+    if (DBIc_DBISTATE(imp_dbh)->debug >= 4) {
       PerlIO_printf(DBIc_LOGPIO(imp_dbh),
           "    ct_cmd_drop() -> CS_COMMAND %x\n", imp_sth->cmd);
+    }
 
     ret = ct_cmd_drop(imp_sth->cmd);
     if (DBIc_DBISTATE(imp_dbh)->debug >= 3) {
@@ -4506,9 +4614,10 @@ void syb_st_destroy(SV *sth, imp_sth_t *imp_sth) {
   /* reset BLK data, if needed */
   if (imp_sth->bcp_desc) {
     /* XXX Should we call blk_done(CS_BLK_ALL) here??? */
-    if (DBIc_DBISTATE(imp_dbh)->debug >= 3)
+    if (DBIc_DBISTATE(imp_dbh)->debug >= 3) {
       PerlIO_printf(DBIc_LOGPIO(imp_dbh),
           "    syb_st_destroy(): blkCleanUp()\n");
+    }
 
     sth_blk_finish(imp_dbh, imp_sth, sth);
   }
@@ -4548,12 +4657,14 @@ int syb_ct_get_data(SV *sth, imp_sth_t *imp_sth, int column, SV *bufrv,
   CS_RETCODE ret;
   SV *bufsv;
 
-  if (buflen == 0)
+  if (buflen == 0) {
     buflen = imp_sth->datafmt[column - 1].maxlength;
+  }
 
-  if (DBIc_DBISTATE(imp_sth)->debug >= 4)
+  if (DBIc_DBISTATE(imp_sth)->debug >= 4) {
     PerlIO_printf(DBIc_LOGPIO(imp_sth),
         "    ct_get_data(%d): buflen = %d\n", column, buflen);
+  }
 
   /* Fix PR/444: segfault if passed a non-reference SV for buffer */
   if (!SvROK(bufrv)) {
@@ -4569,10 +4680,11 @@ int syb_ct_get_data(SV *sth, imp_sth_t *imp_sth, int column, SV *bufrv,
   } else {
     sv_setsv(bufsv, &PL_sv_undef);
   }
-  if (DBIc_DBISTATE(imp_sth)->debug >= 4)
+  if (DBIc_DBISTATE(imp_sth)->debug >= 4) {
     PerlIO_printf(DBIc_LOGPIO(imp_sth),
         "    ct_get_data(%d): got %d bytes (ret = %d)\n", column,
         outlen, ret);
+  }
 
   Safefree(buffer);
 
@@ -4590,27 +4702,30 @@ int syb_ct_finish_send(SV *sth, imp_sth_t *imp_sth) {
   D_imp_dbh_from_sth;
 
   retcode = ct_send(imp_sth->cmd);
-  if (DBIc_DBISTATE(imp_dbh)->debug >= 4)
+  if (DBIc_DBISTATE(imp_dbh)->debug >= 4) {
     PerlIO_printf(DBIc_LOGPIO(imp_dbh),
         "    ct_finish_send(): ct_send() = %d\n", retcode);
+  }
   if (retcode != CS_SUCCEED) {
     return 0;
   }
 
   while ((retcode = ct_results(imp_sth->cmd, &restype)) == CS_SUCCEED) {
-    if (DBIc_DBISTATE(imp_dbh)->debug >= 4)
+    if (DBIc_DBISTATE(imp_dbh)->debug >= 4) {
       PerlIO_printf(DBIc_LOGPIO(imp_dbh),
           "    ct_finish_send(): ct_results(%d) = %d\n", restype,
           retcode);
+    }
     if (restype == CS_PARAM_RESULT) {
       CS_DATAFMT datafmt;
       CS_INT count;
 
       retcode = ct_describe(imp_sth->cmd, 1, &datafmt);
       if (retcode != CS_SUCCEED) {
-        if (DBIc_DBISTATE(imp_dbh)->debug >= 4)
+        if (DBIc_DBISTATE(imp_dbh)->debug >= 4) {
           PerlIO_printf(DBIc_LOGPIO(imp_dbh),
               "    ct_finish_send(): ct_describe() failed\n");
+        }
         return 0;
       }
       datafmt.maxlength = sizeof(imp_dbh->iodesc.timestamp);
@@ -4618,26 +4733,29 @@ int syb_ct_finish_send(SV *sth, imp_sth_t *imp_sth) {
       if ((retcode = ct_bind(imp_sth->cmd, 1, &datafmt,
           (CS_VOID *) imp_dbh->iodesc.timestamp,
           &imp_dbh->iodesc.timestamplen, NULL)) != CS_SUCCEED) {
-        if (DBIc_DBISTATE(imp_dbh)->debug >= 4)
+        if (DBIc_DBISTATE(imp_dbh)->debug >= 4) {
           PerlIO_printf(DBIc_LOGPIO(imp_dbh),
               "    ct_finish_send(): ct_bind() failed\n");
+        }
         return 0;
       }
       retcode = ct_fetch(imp_sth->cmd, CS_UNUSED, CS_UNUSED, CS_UNUSED,
           &count);
       if (retcode != CS_SUCCEED) {
-        if (DBIc_DBISTATE(imp_dbh)->debug >= 4)
+        if (DBIc_DBISTATE(imp_dbh)->debug >= 4) {
           PerlIO_printf(DBIc_LOGPIO(imp_dbh),
               "    ct_finish_send(): ct_fetch() failed\n");
+        }
         return 0;
       }
       /* success... so cancel the rest of this result set */
 
       retcode = ct_cancel(NULL, imp_sth->cmd, CS_CANCEL_CURRENT);
       if (retcode != CS_SUCCEED) {
-        if (DBIc_DBISTATE(imp_dbh)->debug >= 4)
+        if (DBIc_DBISTATE(imp_dbh)->debug >= 4) {
           PerlIO_printf(DBIc_LOGPIO(imp_dbh),
               "    ct_finish_send(): ct_fetch() failed\n");
+        }
         return 0;
       }
     }
@@ -4650,9 +4768,10 @@ int syb_ct_send_data(SV *sth, imp_sth_t *imp_sth, char *buffer, int size) {
   dTHX;
   D_imp_dbh_from_sth;
 
-  if (DBIc_DBISTATE(imp_sth)->debug >= 4)
+  if (DBIc_DBISTATE(imp_sth)->debug >= 4) {
     PerlIO_printf(DBIc_LOGPIO(imp_sth),
         "    ct_send_data(): sending buffer size %d bytes\n", size);
+  }
   return ct_send_data(imp_sth->cmd, buffer, size) == CS_SUCCEED;
 }
 
@@ -4670,34 +4789,41 @@ int syb_ct_data_info(SV *sth, imp_sth_t *imp_sth, int action, int column,
       SV **svp;
 
       svp = hv_fetch((HV*) SvRV(attr), "total_txtlen", 12, 0);
-      if (svp && SvGMAGICAL(*svp)) /* eg if from tainted expression */
+      if (svp && SvGMAGICAL(*svp)) { /* eg if from tainted expression */
         mg_get(*svp);
-      if (svp && SvIOK(*svp))
+      }
+      if (svp && SvIOK(*svp)) {
         imp_dbh->iodesc.total_txtlen = SvIV(*svp);
+      }
 
-      if (DBIc_DBISTATE(imp_dbh)->debug >= 4)
+      if (DBIc_DBISTATE(imp_dbh)->debug >= 4) {
         PerlIO_printf(DBIc_LOGPIO(imp_dbh),
             "    ct_data_info(): set total_txtlen to %d\n",
             imp_dbh->iodesc.total_txtlen);
+      }
 
       svp = hv_fetch((HV*) SvRV(attr), "log_on_update", 13, 0);
-      if (svp && SvGMAGICAL(*svp)) /* eg if from tainted expression */
+      if (svp && SvGMAGICAL(*svp)) { /* eg if from tainted expression */
         mg_get(*svp);
-      if (svp && SvIOK(*svp))
+      }
+      if (svp && SvIOK(*svp)) {
         imp_dbh->iodesc.log_on_update = SvIV(*svp);
-      if (DBIc_DBISTATE(imp_dbh)->debug >= 4)
+      }
+      if (DBIc_DBISTATE(imp_dbh)->debug >= 4) {
         PerlIO_printf(DBIc_LOGPIO(imp_dbh),
             "    ct_data_info(): set log_on_update to %d\n",
             imp_dbh->iodesc.log_on_update);
+      }
     }
   }
 
   if (action == CS_SET) {
     column = CS_UNUSED;
   } else {
-        if (DBIc_DBISTATE(imp_dbh)->debug >= 4)
+    if (DBIc_DBISTATE(imp_dbh)->debug >= 4) {
       PerlIO_printf(DBIc_LOGPIO(imp_dbh),
-          "    ct_data_info(): get IODESC for column %d\n", column);
+        "    ct_data_info(): get IODESC for column %d\n", column);
+    }
   }
 
   ret = ct_data_info(cmd, action, column, &imp_dbh->iodesc);
@@ -4767,19 +4893,22 @@ SV * syb_st_FETCH_attrib(SV *sth, imp_sth_t *imp_sth, SV *keysv) {
   SV *retsv = NULL;
   T_st_params *par;
 
-  for (par = S_st_fetch_params; par->len > 0; par++)
-    if (par->len == kl && strEQ(key, par->str))
+  for (par = S_st_fetch_params; par->len > 0; par++) {
+    if (par->len == kl && strEQ(key, par->str)) {
       break;
-
-  if (par->len <= 0)
+    }
+  }
+  if (par->len <= 0) {
     return Nullsv;
+  }
 
   /* NUM_OF_PARAMS is handled by DBI, and the answer is available
    even if done_desc is not set. Hence we need to handle this here
    rather than in the switch() below. Fixes PR 591, patch
    supplied by machj@ders.cz */
-  if (par - S_st_fetch_params == 0)
+  if (par - S_st_fetch_params == 0) {
     return Nullsv; /* handled by DBI */
+  }
 
   if (!imp_sth->done_desc && (par - S_st_fetch_params) < 10) {
     /* Because of the way Sybase returns information on returned values
@@ -4793,92 +4922,99 @@ SV * syb_st_FETCH_attrib(SV *sth, imp_sth_t *imp_sth, SV *keysv) {
   switch (par - S_st_fetch_params) {
   AV *av;
 
-case 0: /* NUM_OF_PARAMS */
-  return Nullsv; /* handled by DBI */
-case 1: /* NUM_OF_FIELDS */
-  retsv = newSViv(i);
-  break;
-case 2: /* NAME */
-  av = newAV();
-  retsv = newRV(sv_2mortal((SV*) av));
-  while (--i >= 0)
-    av_store(av, i, newSVpv(imp_sth->datafmt[i].name, 0));
-  break;
-case 3: /* NULLABLE */
-  av = newAV();
-  retsv = newRV(sv_2mortal((SV*) av));
-  while (--i >= 0)
-    av_store(av, i,
-        (imp_sth->datafmt[i].status & CS_CANBENULL) ? newSViv(1)
-            : newSViv(0));
-  break;
-case 4: /* TYPE */
-  av = newAV();
-  retsv = newRV(sv_2mortal((SV*) av));
-  while (--i >= 0)
-    av_store(av, i, newSViv(map_syb_types(imp_sth->coldata[i].realType)));
-  break;
-case 5: /* PRECISION */
-  av = newAV();
-  retsv = newRV(sv_2mortal((SV*) av));
-  while (--i >= 0)
-    av_store(av, i, newSViv(
-        imp_sth->datafmt[i].precision ? imp_sth->datafmt[i].precision
-            : imp_sth->coldata[i].realLength));
-  break;
-case 6: /* SCALE */
-  av = newAV();
-  retsv = newRV(sv_2mortal((SV*) av));
-  while (--i >= 0) {
-    switch (imp_sth->coldata[i].realType) {
-    case CS_NUMERIC_TYPE:
-    case CS_DECIMAL_TYPE:
-      av_store(av, i, newSViv(imp_sth->datafmt[i].scale));
-      break;
-    default:
-      av_store(av, i, newSVsv(&PL_sv_undef));
+  case 0: /* NUM_OF_PARAMS */
+    return Nullsv; /* handled by DBI */
+  case 1: /* NUM_OF_FIELDS */
+    retsv = newSViv(i);
+    break;
+  case 2: /* NAME */
+    av = newAV();
+    retsv = newRV(sv_2mortal((SV*) av));
+    while (--i >= 0) {
+      av_store(av, i, newSVpv(imp_sth->datafmt[i].name, 0));
     }
-  }
-  break;
-case 7:
-  retsv = newSViv(imp_sth->moreResults);
-  break;
-case 8:
-  av = newAV();
-  retsv = newRV(sv_2mortal((SV*) av));
-  while (--i >= 0)
-    av_store(av, i, newSViv(imp_sth->coldata[i].realLength));
-  break;
-case 9: /* syb_types: native datatypes */
-  av = newAV();
-  retsv = newRV(sv_2mortal((SV*) av));
-  while (--i >= 0)
-    av_store(av, i, newSViv(imp_sth->coldata[i].realType));
-  break;
-case 10:
-  retsv = newSViv(imp_sth->lastResType);
-  break;
-case 11:
-  retsv = newSViv(DBIc_LongReadLen(imp_sth));
-  break;
-case 12:
-  retsv = newSViv(imp_sth->lastProcStatus);
-  break;
-case 13:
-  retsv = newSViv(imp_sth->doProcStatus);
-  break;
-case 14:
-  retsv = newSViv(imp_sth->noBindBlob);
-  break;
-case 15:
-  retsv = &PL_sv_undef; /* fix for PR/394 */
-  break;
-default:
-  return Nullsv;
-  }
+    break;
+  case 3: /* NULLABLE */
+    av = newAV();
+    retsv = newRV(sv_2mortal((SV*) av));
+    while (--i >= 0) {
+      av_store(av, i,
+          (imp_sth->datafmt[i].status & CS_CANBENULL) ? newSViv(1)
+              : newSViv(0));
+    }
+    break;
+  case 4: /* TYPE */
+    av = newAV();
+    retsv = newRV(sv_2mortal((SV*) av));
+    while (--i >= 0) (
+      av_store(av, i, newSViv(map_syb_types(imp_sth->coldata[i].realType)));
+    }
+    break;
+  case 5: /* PRECISION */
+    av = newAV();
+    retsv = newRV(sv_2mortal((SV*) av));
+    while (--i >= 0) {
+      av_store(av, i, newSViv(
+          imp_sth->datafmt[i].precision ? imp_sth->datafmt[i].precision
+              : imp_sth->coldata[i].realLength));
+    }
+    break;
+  case 6: /* SCALE */
+    av = newAV();
+    retsv = newRV(sv_2mortal((SV*) av));
+    while (--i >= 0) {
+      switch (imp_sth->coldata[i].realType) {
+      case CS_NUMERIC_TYPE:
+      case CS_DECIMAL_TYPE:
+        av_store(av, i, newSViv(imp_sth->datafmt[i].scale));
+        break;
+      default:
+        av_store(av, i, newSVsv(&PL_sv_undef));
+      }
+    }
+    break;
+  case 7:
+    retsv = newSViv(imp_sth->moreResults);
+    break;
+  case 8:
+    av = newAV();
+    retsv = newRV(sv_2mortal((SV*) av));
+    while (--i >= 0) {
+      av_store(av, i, newSViv(imp_sth->coldata[i].realLength));
+    }
+    break;
+  case 9: /* syb_types: native datatypes */
+    av = newAV();
+    retsv = newRV(sv_2mortal((SV*) av));
+    while (--i >= 0) {
+      av_store(av, i, newSViv(imp_sth->coldata[i].realType));
+    }
+    break;
+  case 10:
+    retsv = newSViv(imp_sth->lastResType);
+    break;
+  case 11:
+    retsv = newSViv(DBIc_LongReadLen(imp_sth));
+    break;
+  case 12:
+    retsv = newSViv(imp_sth->lastProcStatus);
+    break;
+  case 13:
+    retsv = newSViv(imp_sth->doProcStatus);
+    break;
+  case 14:
+    retsv = newSViv(imp_sth->noBindBlob);
+    break;
+  case 15:
+    retsv = &PL_sv_undef; /* fix for PR/394 */
+    break;
+  default:
+    return Nullsv;
+    }
 
-  if (retsv == &PL_sv_no || retsv == &PL_sv_yes || retsv == &PL_sv_undef)
+  if (retsv == &PL_sv_no || retsv == &PL_sv_yes || retsv == &PL_sv_undef) {
     return retsv;
+  }
 
   return sv_2mortal(retsv);
 }
@@ -4894,12 +5030,15 @@ int syb_st_STORE_attrib(SV *sth, imp_sth_t *imp_sth, SV *keysv, SV *valuesv) {
         key);
   }
 
-  for (par = S_st_store_params; par->len > 0; par++)
-    if (par->len == kl && strEQ(key, par->str))
+  for (par = S_st_store_params; par->len > 0; par++) {
+    if (par->len == kl && strEQ(key, par->str)) {
       break;
+    }
+  }
 
-  if (par->len <= 0)
+  if (par->len <= 0) {
     return FALSE;
+  }
 
   if (DBIc_DBISTATE(imp_sth)->debug >= 3) {
     PerlIO_printf(DBIc_LOGPIO(imp_sth),
@@ -5038,10 +5177,9 @@ static CS_NUMERIC to_numeric(char *str, CS_LOCALE *locale, CS_DATAFMT *datafmt,
 
   memset(&mn, 0, sizeof(mn));
 
-  if (!str || !*str)
+  if (!str || !*str) {
     str = "0";
-
-  /*    warn("to_money(%s)\n", str); */
+  }
 
   memset(&srcfmt, 0, sizeof(srcfmt));
   srcfmt.datatype = CS_CHAR_TYPE;
@@ -5050,10 +5188,11 @@ static CS_NUMERIC to_numeric(char *str, CS_LOCALE *locale, CS_DATAFMT *datafmt,
   srcfmt.locale = locale;
 
   if (type) { /* RPC call */
-    if ((p = strchr(str, '.')))
+    if ((p = strchr(str, '.'))) {
       datafmt->scale = strlen(p + 1);
-    else
+    } else {
       datafmt->scale = 0;
+    }
     datafmt->precision = strlen(str);
   } else { /* dynamic SQL */
     /* If the number of digits after the . is larger than
@@ -5062,14 +5201,15 @@ static CS_NUMERIC to_numeric(char *str, CS_LOCALE *locale, CS_DATAFMT *datafmt,
     if ((p = strchr(str, '.'))) {
       int len = strlen(++p);
       if (len > datafmt->scale) {
-        if (p[datafmt->scale] < '5')
+        if (p[datafmt->scale] < '5') {
           p[datafmt->scale] = 0;
-        else {
+        } else {
           p[datafmt->scale] = 0;
           len = strlen(str);
           while (len--) {
-            if (str[len] == '.')
+            if (str[len] == '.') {
               continue;
+            }
             if (str[len] < '9') {
               str[len]++;
               break;
@@ -5089,11 +5229,13 @@ static CS_NUMERIC to_numeric(char *str, CS_LOCALE *locale, CS_DATAFMT *datafmt,
     }
   }
 
-  if (cs_convert(context, &srcfmt, str, datafmt, &mn, &reslen) != CS_SUCCEED)
+  if (cs_convert(context, &srcfmt, str, datafmt, &mn, &reslen) != CS_SUCCEED) {
     warn("cs_convert failed (to_numeric(%s))", str);
+  }
 
-  if (reslen == CS_UNUSED)
+  if (reslen == CS_UNUSED) {
     warn("conversion failed: to_numeric(%s)", str);
+  }
 
   return mn;
 }
@@ -5105,8 +5247,9 @@ static CS_MONEY to_money(char *str, CS_LOCALE *locale) {
 
   memset(&mn, 0, sizeof(mn));
 
-  if (!str)
+  if (!str) {
     return mn;
+  }
 
   memset(&srcfmt, 0, sizeof(srcfmt));
   srcfmt.datatype = CS_CHAR_TYPE;
@@ -5121,11 +5264,13 @@ static CS_MONEY to_money(char *str, CS_LOCALE *locale) {
   destfmt.maxlength = sizeof(CS_MONEY);
   destfmt.format = CS_FMT_UNUSED;
 
-  if (cs_convert(context, &srcfmt, str, &destfmt, &mn, &reslen) != CS_SUCCEED)
+  if (cs_convert(context, &srcfmt, str, &destfmt, &mn, &reslen) != CS_SUCCEED) {
     warn("cs_convert failed (to_money(%s))", str);
+  }
 
-  if (reslen == CS_UNUSED)
+  if (reslen == CS_UNUSED) {
     warn("conversion failed: to_money(%s)", str);
+  }
 
   return mn;
 }
@@ -5139,8 +5284,9 @@ static CS_BINARY * to_binary(char *str, STRLEN *outlen) {
   /* Advance past the 0x. We could use the value of syb_use_bin_0x 
    to infer whether to advance or not, but it's just as easy to 
    explicitly check. */
-  if (str[0] == '0' && str[1] == 'x')
+  if (str[0] == '0' && str[1] == 'x') {
     str += 2;
+  }
 
   /* The length of 'str' _should_ be even, but we go thru some acrobatics
    to handle an odd length. We won't flag it as invalid, just pretend
@@ -5183,11 +5329,12 @@ static int _dbd_rebind_ph(SV *sth, imp_sth_t *imp_sth, phs_t *phs, int maxlen) {
     char *text = neatsvpv(phs->sv, 0);
     PerlIO_printf(DBIc_LOGPIO(imp_dbh), "       bind %s (%s) <== %s (",
         phs->name, phs->varname, text);
-    if (SvOK(phs->sv))
+    if (SvOK(phs->sv)) {
       PerlIO_printf(DBIc_LOGPIO(imp_dbh), "size %ld/%ld/%ld, ",
           (long) SvCUR(phs->sv), (long) SvLEN(phs->sv), phs->maxlen);
-    else
+    } else {
       PerlIO_printf(DBIc_LOGPIO(imp_dbh), "NULL, ");
+    }
     PerlIO_printf(DBIc_LOGPIO(imp_dbh), "ptype %d, otype %d%s)\n",
         (int) SvTYPE(phs->sv), phs->ftype, (phs->is_inout) ? ", inout"
             : "");
@@ -5298,7 +5445,6 @@ static int _dbd_rebind_ph(SV *sth, imp_sth_t *imp_sth, phs_t *phs, int maxlen) {
         } else {
           value = " ";
           value_len = CS_NULLTERM; /* PR/624 */
-
         }
       }
       break;
@@ -5316,8 +5462,6 @@ static int _dbd_rebind_ph(SV *sth, imp_sth_t *imp_sth, phs_t *phs, int maxlen) {
     PerlIO_printf(DBIc_LOGPIO(imp_dbh),
         "       bind %s <== '%.100s' (size %d, ok %d)\n", phs->name,
         phs->sv_buf, (long) phs->maxlen, SvOK(phs->sv) ? 1 : 0);
-  }
-  if (DBIc_DBISTATE(imp_dbh)->debug >= 4) {
     PerlIO_printf(DBIc_LOGPIO(imp_dbh),
         "       datafmt: type=%d, name=%s, status=%d, len=%d\n",
         phs->datafmt.datatype, phs->datafmt.name, phs->datafmt.status,
@@ -5354,13 +5498,15 @@ static int _dbd_rebind_ph(SV *sth, imp_sth_t *imp_sth, phs_t *phs, int maxlen) {
   }
 
   if ((rc = ct_param(imp_sth->cmd, &phs->datafmt, value, value_len, 0))
-      != CS_SUCCEED)
+      != CS_SUCCEED) {
     syb_set_error(imp_dbh, -1, "ct_param() failed!");
+  }
 
   phs->datafmt.datatype = datatype;
 
-  if (free_value && value != NULL)
+  if (free_value && value != NULL) {
     Safefree(value);
+  }
 
   return (rc == CS_SUCCEED);
 }
@@ -5388,8 +5534,9 @@ int syb_bind_ph(SV *sth, imp_sth_t *imp_sth, SV *ph_namesv, SV *newvalue,
 
   /* This is the way Tim does it in DBD::Oracle to get around the
    tainted issue. */
-  if (SvGMAGICAL(ph_namesv)) /* eg if from tainted expression */
+  if (SvGMAGICAL(ph_namesv)) { /* eg if from tainted expression */
     mg_get(ph_namesv);
+  }
   if (!SvNIOKp(ph_namesv)) {
     name = SvPV(ph_namesv, name_len);
   }
@@ -5399,25 +5546,29 @@ int syb_bind_ph(SV *sth, imp_sth_t *imp_sth, SV *ph_namesv, SV *newvalue,
     name_len = strlen(name);
   }
 
-  if (SvTYPE(newvalue) > SVt_PVLV) /* hook for later array logic   */
+  if (SvTYPE(newvalue) > SVt_PVLV) { /* hook for later array logic   */
     croak("Can't bind non-scalar value (currently)");
+  }
 #if 0
   if (SvTYPE(newvalue) == SVt_PVLV && is_inout) /* may allow later */
   croak("Can't bind ``lvalue'' mode scalar as inout parameter (currently)");
 #endif
 
-  if (DBIc_DBISTATE(imp_sth)->debug >= 3)
+  if (DBIc_DBISTATE(imp_sth)->debug >= 3) {
     PerlIO_printf(DBIc_LOGPIO(imp_sth),
         "bind %s <== '%.200s' (attribs: %s)\n", name, SvPV(newvalue,
             lna), attribs ? SvPV(attribs, lna) : "");
+  }
 
   phs_svp = hv_fetch(imp_sth->all_params_hv, name, name_len, 0);
-  if (phs_svp == NULL)
+  if (phs_svp == NULL) {
     croak("Can't bind unknown placeholder '%s'", name);
+  }
   phs = (phs_t*) SvPVX(*phs_svp); /* placeholder struct	*/
 
-  if (DBIc_DBISTATE(imp_sth)->debug >= 3)
+  if (DBIc_DBISTATE(imp_sth)->debug >= 3) {
     PerlIO_printf(DBIc_LOGPIO(imp_sth), "    parameter is output [%s]\n", is_inout ? "true" : "false" );
+  }
 
   if (phs->sv == &PL_sv_undef) { /* first bind for this placeholder      */
     phs->sql_type = (sql_type) ? sql_type : SQL_CHAR;
@@ -5426,8 +5577,9 @@ int syb_bind_ph(SV *sth, imp_sth_t *imp_sth, SV *ph_namesv, SV *newvalue,
       if (phs->varname[0] == '@') {
         strcpy(phs->datafmt.name, phs->varname);
         phs->datafmt.namelen = strlen(phs->varname);
-      } else
+      } else {
         phs->datafmt.namelen = 0;
+      }
       phs->datafmt.datatype = phs->ftype;
       phs->datafmt.status = phs->is_inout ? CS_RETURN : CS_INPUTVALUE;
       phs->datafmt.maxlength = 0;
@@ -5460,20 +5612,23 @@ int syb_bind_ph(SV *sth, imp_sth_t *imp_sth, SV *ph_namesv, SV *newvalue,
   }
 
   if (!is_inout) { /* normal bind to take a (new) copy of current value    */
-    if (phs->sv == &PL_sv_undef) /* (first time bind) */
+    if (phs->sv == &PL_sv_undef) { /* (first time bind) */
       phs->sv = newSV(0);
+    }
     sv_setsv(phs->sv, newvalue);
     phs->is_boundinout = 0;
   } else {
     phs->sv = SvREFCNT_inc(newvalue);             /* Take a reference to the input variable */
     phs->is_boundinout = 1;
-    if (DBIc_DBISTATE(imp_sth)->debug >= 3)
+    if (DBIc_DBISTATE(imp_sth)->debug >= 3) {
       PerlIO_printf(DBIc_LOGPIO(imp_sth), "    parameter is bound as inout\n");
+    }
   }
 
   /* BLK binding done at execute time, in a loop */
-  if (imp_sth->type == 2)
+  if (imp_sth->type == 2) {
     return 1;
+  }
 
   return 1; /* _dbd_rebind_ph(sth, imp_sth, phs, 0); */
 }
@@ -5719,8 +5874,9 @@ static void fetchKerbTicket(imp_dbh_t *imp_dbh) {
     XPUSHs(sv_2mortal(newSVpv(server, 0)));
 
     PUTBACK;
-    if ((count = perl_call_sv(imp_dbh->kerbGetTicket, G_SCALAR)) != 1)
+    if ((count = perl_call_sv(imp_dbh->kerbGetTicket, G_SCALAR)) != 1) {
       croak("A Kerberos Ticket handler can't return a LIST.");
+    }
     SPAGAIN;
     retval = POPs;
 
@@ -5771,16 +5927,19 @@ static CS_RETCODE syb_blk_init(imp_dbh_t *imp_dbh, imp_sth_t *imp_sth) {
 
   ret = blk_alloc(imp_sth->connection ? imp_sth->connection
       : imp_dbh->connection, BLK_VERSION, &imp_sth->bcp_desc);
-  if (ret != CS_SUCCEED)
+  if (ret != CS_SUCCEED) {
     goto FAIL;
+  }
   ret = blk_props(imp_sth->bcp_desc, CS_SET, BLK_IDENTITY,
       (CS_VOID*) &imp_sth->bcpIdentityFlag, CS_UNUSED, NULL);
-  if (ret != CS_SUCCEED)
+  if (ret != CS_SUCCEED) {
     goto FAIL;
+  }
 
   ret = blk_init(imp_sth->bcp_desc, CS_BLK_IN, table, strlen(table));
-  if (ret != CS_SUCCEED)
+  if (ret != CS_SUCCEED) {
     goto FAIL;
+  }
 
   num_cols = DBIc_NUM_PARAMS(imp_sth);
 
@@ -5800,21 +5959,23 @@ static CS_RETCODE syb_blk_init(imp_dbh_t *imp_dbh, imp_sth_t *imp_sth) {
     memset(&phs->datafmt, 0, sizeof(CS_DATAFMT));
     ret = blk_describe(imp_sth->bcp_desc, i, &phs->datafmt);
 
-    if (DBIc_DBISTATE(imp_dbh)->debug >= 4)
+    if (DBIc_DBISTATE(imp_dbh)->debug >= 4) {
       PerlIO_printf(
           DBIc_LOGPIO(imp_dbh),
           "    syb_blk_init: blk_describe()==%d col %d, type %d, status %d, length %d\n",
           ret, i, phs->datafmt.datatype, phs->datafmt.status,
           phs->datafmt.maxlength);
+    }
 
-    if (ret != CS_SUCCEED)
+    if (ret != CS_SUCCEED) {
       goto FAIL;
+    }
   }
 
   FAIL: ;
-  if (ret != CS_SUCCEED)
+  if (ret != CS_SUCCEED) {
     blkCleanUp(imp_sth, imp_dbh);
-  else {
+  } else {
     imp_dbh->imp_sth = imp_sth; /* hack! */
     /* Turn off autocommit for this handle, mainly to silence
      warnings from Sybase.xsi's commit() implementation */
@@ -5835,22 +5996,26 @@ static void blkCleanUp(imp_sth_t *imp_sth, imp_dbh_t *imp_dbh)
 static void blkCleanUp(imp_sth_t *imp_sth, imp_dbh_t *imp_dbh) {
   int i;
 
-  for (i = 0; i < imp_sth->numCols; ++i)
-    if (imp_sth->coldata[i].value.p && imp_sth->coldata[i].v_alloc)
+  for (i = 0; i < imp_sth->numCols; ++i) {
+    if (imp_sth->coldata[i].value.p && imp_sth->coldata[i].v_alloc) {
       Safefree(imp_sth->coldata[i].value.p);
+    }
+  }
 
-  if (imp_sth->coldata)
+  if (imp_sth->coldata) {
     Safefree(imp_sth->coldata);
+  }
   imp_sth->numCols = 0;
   imp_sth->coldata = NULL;
   imp_sth->datafmt = NULL;
 
   if (imp_sth->bcp_desc) {
     CS_INT ret = blk_drop(imp_sth->bcp_desc);
-    if (DBIc_DBISTATE(imp_dbh)->debug >= 4)
+    if (DBIc_DBISTATE(imp_dbh)->debug >= 4) {
       PerlIO_printf(DBIc_LOGPIO(imp_dbh),
           "    blkCleanUp -> blk_drop(%d) = %d\n", imp_sth->bcp_desc,
           ret);
+    }
     imp_sth->bcp_desc = NULL;
   }
 }
@@ -5862,15 +6027,19 @@ static int getTableName(char *statement, char *table, int maxwidth) {
 
   strcpy(ptr, statement);
   p = strtok(ptr, " ");
-  if (!p || !*p || strncasecmp(p, "insert", 7))
+  if (!p || !*p || strncasecmp(p, "insert", 7)) {
     goto FAIL;
+  }
   p = strtok(NULL, " (");
-  if (!p || !*p)
+  if (!p || !*p) {
     goto FAIL;
-  if (!strncasecmp(p, "into", 4))
+  }
+  if (!strncasecmp(p, "into", 4)) {
     p = strtok(NULL, " (");
-  if (!p || !*p)
+  }
+  if (!p || !*p) {
     goto FAIL;
+  }
   strncpy(table, p, maxwidth);
   Safefree(ptr);
 
@@ -5889,10 +6058,11 @@ SV *syb_set_cslib_cb(SV *cb) {
   dTHX;
   SV *old = cslib_cb;
 
-  if (cslib_cb == (SV*) NULL)
+  if (cslib_cb == (SV*) NULL) {
     cslib_cb = newSVsv(cb);
-  else
+  } else {
     sv_setsv(cslib_cb, cb);
+  }
 
   return old ? old : &PL_sv_undef;
 #endif
@@ -5906,17 +6076,19 @@ static int toggle_autocommit(SV *dbh, imp_dbh_t *imp_dbh, int flag) {
 
   if (!imp_dbh->init_done) {
     imp_dbh->init_done = 1;
-    if (DBIc_DBISTATE(imp_dbh)->debug >= 5)
+    if (DBIc_DBISTATE(imp_dbh)->debug >= 5) {
       PerlIO_printf(DBIc_LOGPIO(imp_dbh),
           "    toggle_autocommit: init_done not set, no action\n");
+    }
 
     return TRUE;
   }
 
-  if (DBIc_DBISTATE(imp_dbh)->debug >= 5)
+  if (DBIc_DBISTATE(imp_dbh)->debug >= 5) {
     PerlIO_printf(DBIc_LOGPIO(imp_dbh),
         "    toggle_autocommit: current = %s, new = %s\n",
         current ? "on" : "off", flag ? "on" : "off");
+  }
   if (flag) {
     if (!current) {
       /* Going from OFF to ON - so force a COMMIT on any open 
