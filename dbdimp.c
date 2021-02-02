@@ -2610,7 +2610,7 @@ SV *syb_db_FETCH_attrib(SV *dbh, imp_dbh_t *imp_dbh, SV *keysv) {
   if (kl == 14 && strEQ(key, "syb_use_bin_0x")) {
     if (imp_dbh->useBin0x) {
       retsv = newSViv(1);
-    } else {
+    } else {
       retsv = newSViv(0);
     }
   }
