@@ -4919,9 +4919,9 @@ SV * syb_st_FETCH_attrib(SV *sth, imp_sth_t *imp_sth, SV *keysv) {
 
   i = DBIc_NUM_FIELDS(imp_sth);
 
-  switch (par - S_st_fetch_params) {
   AV *av;
 
+  switch (par - S_st_fetch_params) {
   case 0: /* NUM_OF_PARAMS */
     return Nullsv; /* handled by DBI */
   case 1: /* NUM_OF_FIELDS */
@@ -4946,7 +4946,7 @@ SV * syb_st_FETCH_attrib(SV *sth, imp_sth_t *imp_sth, SV *keysv) {
   case 4: /* TYPE */
     av = newAV();
     retsv = newRV(sv_2mortal((SV*) av));
-    while (--i >= 0) (
+    while (--i >= 0) {
       av_store(av, i, newSViv(map_syb_types(imp_sth->coldata[i].realType)));
     }
     break;
