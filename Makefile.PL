@@ -59,21 +59,28 @@ WriteMakefile(
 		? ( MAN3PODS => { 'Sybase.pm' => 'blib/man3/DBD_Sybase.3' } )
 		: ( MAN3PODS => { 'Sybase.pm' => 'blib/man3/DBD::Sybase.3' } )
 	),
-	(
-		$] >= 5.005
-		? (
-			ABSTRACT => 'DBI driver for Sybase datasources',
-			AUTHOR   => 'Michael Peppler (mpeppler@peppler.org)'
-		  )
-		: ()
-	),
+  ABSTRACT => 'DBI driver for Sybase datasources',
+  AUTHOR   => 'Michael Peppler (mpeppler@peppler.org)',
 	(
 		     $] >= 5.005
 		  && $^O eq 'MSWin32'
 		  && $Config{archname} =~ /-object\b/i ? ( CAPI => 'TRUE' ) : ()
 	),
 	'dist' => { 'TARFLAGS' => 'cvf', 'COMPRESS' => 'gzip' },
-	( $^O eq 'VMS' ? ( PM => 'Sybase.pm' ) : () )
+	( $^O eq 'VMS' ? ( PM => 'Sybase.pm' ) : () ),
+	META_MERGE => {
+    'meta-spec' => { version => 2 },
+    resources => {
+      bugtracker => {
+				web => 'https://github.com/mpeppler/DBD-Sybase/issues',
+      },
+      repository => {
+        url  => 'https://github.com/mpeppler/DBD-Sybase.git',
+        web  => 'https://github.com/mpeppler/DBD-Sybase',
+        type => 'git',
+      }
+    },
+  }
 );
 
 sub MY::postamble {
