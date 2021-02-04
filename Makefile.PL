@@ -146,10 +146,10 @@ sub configure {
 
 	my $libfound = 0;
 	my $libsub   = '';
-  my @libdir = ( 'lib', 'lib64' );
-  if ($^O =~ /win/i) {
-    @libdir = ( 'dll' );
-  }
+	my @libdir = ( 'lib', 'lib64' );
+	if ($^O eq 'MSWin32') {
+		@libdir = ( 'dll' );
+	}
 	foreach $libdir ( @libdir ) {
 		if ( -d "$SYBASE/$libdir" ) {
 			if ( checkLib($SYBASE) ) {
@@ -159,8 +159,9 @@ sub configure {
 		}
 	}
 
-	die "Can't find any Sybase libraries in $SYBASE/lib or $SYBASE/lib64"
-	  unless $libfound;
+	die "Can't find any Sybase libraries in " .
+			join(' or ', map "$SYBASE/$_", @libdir)
+		unless $libfound;
 
 	my $inc_found = 0;
 	if ( -d "$SYBASE/include" && -f "$SYBASE/include/cspublic.h" ) {
