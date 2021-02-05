@@ -114,7 +114,7 @@ $dbh->{syb_quoted_identifier} = 0;
 # Test multiple result sets, varying column names
 $sth = $dbh->prepare("
 select uid, name from sysusers where uid = -2
-select spid, kpid, suid from master..sysprocesses where spid = \@\@spid
+select spid, kpid, uid from master..sysprocesses where spid = \@\@spid
 ");
 ok($sth, 'prepare multiple');
 $rc = $sth->execute;
@@ -159,10 +159,10 @@ SKIP: {
     ok($desc[0]->{TYPE} == 8, 'describe TYPE');
 }
 
-$sth = $dbh->prepare(q|select suid, suser_name(suid), cpu, physical_io
+$sth = $dbh->prepare(q|select uid, suser_name(uid), cpu, physical_io
 from master..sysprocesses
-order by suid
-compute sum(cpu), sum(physical_io) by suid
+order by uid
+compute sum(cpu), sum(physical_io) by uid
 		       |
 );
 

@@ -88,7 +88,7 @@ sub test2 {
 
 	my $sth1 = $dbh->prepare("select * from master..sysprocesses where spid = ?");
 	ok(defined($sth1), 'test2 prepare1');
-	my $sth2 = $dbh->prepare("select * from sysusers where suid = ?");
+	my $sth2 = $dbh->prepare("select * from sysusers where uid = ?");
 	ok(defined($sth2), 'test2 prepare2');
 	
 	$rc = $sth1->execute(1);
@@ -128,7 +128,7 @@ sub test3 {
 
 	my $sth1 = $dbh->prepare("select * from master..sysprocesses where spid = ?");
 	ok(defined($sth1), 'test3 prepare1');
-	my $sth2 = $dbh->prepare("select * from sysusers where suid = ?");
+	my $sth2 = $dbh->prepare("select * from sysusers where uid = ?");
 	ok(defined($sth2), 'test3 prepare2');
 
 	$rc = $sth1->execute(1);
