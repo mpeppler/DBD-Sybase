@@ -45,6 +45,9 @@ $ldflags = "-L$SYBASE/$libdir $ldflags" unless $^O eq 'VMS';
 
 WriteMakefile(
 	'NAME'         => 'DBD::Sybase',
+  PREREQ_PM      => {
+    'DBI' => '0'
+  },
 	LIBS           => [$lib_string],
 	INC            => $inc_string,
 	clean          => { FILES => "Sybase.xsi $written_pwd_file" },
