@@ -153,11 +153,11 @@ sub configure {
 	if ($^O eq 'MSWin32') {
 		@libdir = ( 'dll' );
 	}
-	foreach $libdir ( @libdir ) {
-		if ( -d "$SYBASE/$libdir" ) {
+	foreach my $l ( @libdir ) {
+		if ( -d "$SYBASE/$l" ) {
 			if ( checkLib($SYBASE) ) {
 				$libfound = 1;
-				$libsub   = $libdir;
+				$libsub   = $l;
 			}
 		}
 	}
@@ -220,11 +220,11 @@ sub configure {
 		my $extra = getExtraLibs( $SYBASE, $attr{EXTRA_LIBS}, $version );
 		if ($file) {
 			$lib_string =
-"-L$SYBASE/$libdir -lct -lcs -ltcl -lcomn -lintl -lblk $attr{EXTRA_LIBS} -ldl -lm";
+"-L$SYBASE/$libsub -lct -lcs -ltcl -lcomn -lintl -lblk $attr{EXTRA_LIBS} -ldl -lm";
 		}
 		else {
 			$lib_string =
-"-L$SYBASE/$libdir -lct -lcs -ltcl -lcomn -lintl -lblk $extra -ldl -lm";
+"-L$SYBASE/$libsub -lct -lcs -ltcl -lcomn -lintl -lblk $extra -ldl -lm";
 		}
 		if ($newlibnames) {
 			foreach (qw(ct cs tcl comn intl blk)) {
@@ -237,7 +237,7 @@ sub configure {
 
 		my %libname;
 
-		%libname = loadSybLibs("$SYBASE/$libdir");
+		%libname = loadSybLibs("$SYBASE/$libsub");
 
 		my $libtype = '';
 
@@ -368,7 +368,7 @@ sub getLibVersion {
 	binmode(IN);
 	my $version;
 	while (<IN>) {
-		if (/Sybase Client-Library\/([^\/]+)\//) {
+		if (/S(?:AP|ybase) Client-Library\/([^\/]+)\//) {
 			$version = $1;
 			last;
 		}
