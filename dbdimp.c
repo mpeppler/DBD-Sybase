@@ -5191,7 +5191,7 @@ static CS_NUMERIC to_numeric(char *str, CS_LOCALE *locale, CS_DATAFMT *datafmt,
      datafmt.maxlength value to 35. This is not needed with Sybase client libs, but 
      with freetds and with MS-SQL servers.
   */
-  datafmt.maxlength = 35;
+  datafmt->maxlength = 35;
      
   if (type) { /* RPC call */
     if ((p = strchr(str, '.'))) {
