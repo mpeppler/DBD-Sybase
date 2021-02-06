@@ -191,7 +191,7 @@ if($dbh->{syb_server_version} ge '12.5.3') {
     my $sth = $dbh->prepare("select convert(date, getdate()), convert(time, getdate())");
     $sth->execute;
     while(my $r = $sth->fetch) {
-	print "@$r\n";
+	    print "@$r\n";
     }
 }
 
@@ -199,7 +199,7 @@ if($dbh->{syb_server_version} ge '12.5.3') {
 #
 
 SKIP: {
-    skip 'requires ASE 15 ', 2 unless $dbh->{syb_server_version} ge '15';
+    skip 'requires ASE 15 ', 2 if $dbh->{syb_server_version} lt '15' || $dbh->{syb_server_version} eq 'Unknown';
     $dbh->{PrintError} = 1;
     my $sth = $dbh->prepare("select convert(unsigned smallint, power(2, 15)), convert(bigint, power(convert(bigint, 2), 32))");
     $sth->execute;
@@ -211,7 +211,7 @@ SKIP: {
 }
 
 SKIP: {
-    skip 'requires ASE 15.5 ', 2 unless $dbh->{syb_server_version} ge '15.5';
+    skip 'requires ASE 15.5 ', 2 if $dbh->{syb_server_version} lt '15.5' || $dbh->{syb_server_version} eq 'Unknown';
     $dbh->{PrintError} = 1;
     $dbh->syb_date_fmt('LONGMS');
     my $sth = $dbh->prepare("select current_bigdatetime(), current_bigtime()");
