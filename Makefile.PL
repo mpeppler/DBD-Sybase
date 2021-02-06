@@ -195,12 +195,13 @@ sub configure {
 
 	if ( $^O eq 'MSWin32' ) {
     if ($version ge '15') {
+      # $libsub is "dll" on Windows...
       $lib_string =
-  "-L$SYBASE/lib -llibsybct.lib -llibsybcs.lib -llibsybtcl.lib -llibsybcomn.lib -llibsybintl.lib -llibsybblk.lib $attr{EXTRA_LIBS} -lm";
+  "-L$SYBASE/$libsub -llibsybct.lib -llibsybcs.lib -llibsybtcl.lib -llibsybcomn.lib -llibsybintl.lib -llibsybblk.lib $attr{EXTRA_LIBS} -lm";
     }
     else {
       $lib_string =
-  "-L$SYBASE/lib -llibct.lib -llibcs.lib -llibtcl.lib -llibcomn.lib -llibintl.lib -llibblk.lib $attr{EXTRA_LIBS} -lm";
+  "-L$SYBASE/$libsub -llibct.lib -llibcs.lib -llibtcl.lib -llibcomn.lib -llibintl.lib -llibblk.lib $attr{EXTRA_LIBS} -lm";
     }
 	}
 	elsif ( $^O eq 'VMS' ) {
