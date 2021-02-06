@@ -326,7 +326,7 @@
 
 		my $sth =
 		  $dbh->prepare(
-"sp_fkeys $pk_table, $pk_catalog, $pk_schema, $fk_table, $fk_catalog, $fk_schema"
+"sp_fkeys $pk_table, $pk_schema, $pk_catalog, $fk_table, $fk_schema, $fk_catalog"
 		  );
 
 		$sth->execute;
@@ -343,7 +343,7 @@
 
 		my $sth =
 		  $dbh->prepare(
-"sp_indexes \@\@servername, $table, $catalog, $schema, NULL, $is_unique"
+"sp_indexes \@\@servername, $table, $schema, $catalog, NULL, $is_unique"
 		  );
 
 		$sth->execute;
@@ -431,9 +431,7 @@
 		my $retryverbose = $dbh->FETCH('syb_deadlock_verbose');
 		my $nostatus     = $dbh->FETCH('syb_nsql_nostatus');
 
-		$option = $callback
-		  if ref($callback) eq 'HASH'
-		  and ref($option) ne 'HASH';
+		$option = $callback if ref($callback) eq 'HASH' and ref($option) ne 'HASH';
 		my $bytype = $option->{bytype} || 0;
 		my $merge = $bytype eq 'merge';
 
@@ -500,33 +498,28 @@
 								unless ( $callback->(%$data) ) {
 									return;
 								}
-							}
-							else {
+							}	else {
 								push( @set, {%$data} );
 							}
 						}
-					}
-					elsif ( $type eq "ARRAY" ) {
+					} elsif ( $type eq "ARRAY" ) {
 						while ( $data = $sth->fetchrow_arrayref ) {
 							die $sth->errstr if ( $sth->err );
 							if ( ref $callback eq "CODE" ) {
 								unless ( $callback->(@$data) ) {
 									return;
 								}
-							}
-							else {
+							}	else {
 								push( @set,
 									( @$data == 1 ? $$data[0] : [@$data] ) );
 							}
 						}
-					}
-					else {
+					}	else {
 
 						# If you ask for nothing, you get nothing.  But suck out
 						# the data just in case.
 						while ( $data = $sth->fetch ) { 1; }
-
-	# NB this is actually *counting* the result sets which are not ignored above
+	          # NB this is actually *counting* the result sets which are not ignored above
 						$res[0]++;    # Return non-null (true)
 					}
 
@@ -536,11 +529,9 @@
 						if ($merge) {
 							$resbytype{$result_type} ||= [];
 							push @{ $resbytype{$result_type} }, @set;
-						}
-						elsif ($bytype) {
+						}	elsif ($bytype) {
 							push @res, { $result_type => [@set] };
-						}
-						else {
+						}	else {
 							push @res, @set;
 						}
 					}
