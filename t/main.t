@@ -145,7 +145,7 @@ SKIP: {
 #my $ti = $dbh->type_info_all;
 #foreach
 my @type_info = $dbh->type_info(DBI::SQL_CHAR);
-ok(@type_info > 1, 'type_info');
+ok(@type_info >= 1, 'type_info');
 
 ok(exists($type_info[0]->{DATA_TYPE}), 'type_info DATA_TYPE');
 
