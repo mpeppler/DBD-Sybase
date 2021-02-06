@@ -18,7 +18,7 @@ use vars qw($SYBASE $inc_string $lib_string $LINKTYPE $written_pwd_file
 
 $LINKTYPE         = 'dynamic';
 $written_pwd_file = 'PWD';
-$libdir           = 'lib';
+#$libdir           = 'lib';
 
 my $file;
 my $chained;
@@ -147,8 +147,6 @@ sub configure {
 		}
 	}
 
-	my $libfound = 0;
-	my $libsub   = '';
 	my @libdir = ( 'lib', 'lib64' );
 	if ($^O eq 'MSWin32') {
 		@libdir = ( 'dll' );
@@ -156,15 +154,14 @@ sub configure {
 	foreach my $l ( @libdir ) {
 		if ( -d "$SYBASE/$l" ) {
 			if ( checkLib($SYBASE) ) {
-				$libfound = 1;
-				$libsub   = $l;
+				$libdir   = $l;
 			}
 		}
 	}
 
 	die "Can't find any Sybase libraries in " .
 			join(' or ', map "$SYBASE/$_", @libdir)
-		unless $libfound;
+		unless defined $libdir;
 
 	my $inc_found = 0;
 	if ( -d "$SYBASE/include" && -f "$SYBASE/include/cspublic.h" ) {
@@ -182,7 +179,7 @@ sub configure {
 	die "Can't find the Client Library include files under $SYBASE"
 	  unless ($inc_found);
 
-	my $version = getLibVersion("$SYBASE/$libsub");
+	my $version = getLibVersion("$SYBASE/$libdir");
 
 	#    if(!$version || $version lt '12') {
 	#print "FreeTDS or older Client Library. Enabling CS-Lib Callbacks\n";
@@ -197,11 +194,11 @@ sub configure {
     if ($version ge '15') {
       # $libsub is "dll" on Windows...
       $lib_string =
-  "-L$SYBASE/$libsub -llibsybct.lib -llibsybcs.lib -llibsybtcl.lib -llibsybcomn.lib -llibsybintl.lib -llibsybblk.lib $attr{EXTRA_LIBS} -lm";
+  "-L$SYBASE/$libdir -llibsybct.lib -llibsybcs.lib -llibsybtcl.lib -llibsybcomn.lib -llibsybintl.lib -llibsybblk.lib $attr{EXTRA_LIBS} -lm";
     }
     else {
       $lib_string =
-  "-L$SYBASE/$libsub -llibct.lib -llibcs.lib -llibtcl.lib -llibcomn.lib -llibintl.lib -llibblk.lib $attr{EXTRA_LIBS} -lm";
+  "-L$SYBASE/$libdir -llibct.lib -llibcs.lib -llibtcl.lib -llibcomn.lib -llibintl.lib -llibblk.lib $attr{EXTRA_LIBS} -lm";
     }
 	}
 	elsif ( $^O eq 'VMS' ) {
@@ -220,11 +217,11 @@ sub configure {
 		my $extra = getExtraLibs( $SYBASE, $attr{EXTRA_LIBS}, $version );
 		if ($file) {
 			$lib_string =
-"-L$SYBASE/$libsub -lct -lcs -ltcl -lcomn -lintl -lblk $attr{EXTRA_LIBS} -ldl -lm";
+"-L$SYBASE/$libdir -lct -lcs -ltcl -lcomn -lintl -lblk $attr{EXTRA_LIBS} -ldl -lm";
 		}
 		else {
 			$lib_string =
-"-L$SYBASE/$libsub -lct -lcs -ltcl -lcomn -lintl -lblk $extra -ldl -lm";
+"-L$SYBASE/$libdir -lct -lcs -ltcl -lcomn -lintl -lblk $extra -ldl -lm";
 		}
 		if ($newlibnames) {
 			foreach (qw(ct cs tcl comn intl blk)) {
@@ -237,7 +234,7 @@ sub configure {
 
 		my %libname;
 
-		%libname = loadSybLibs("$SYBASE/$libsub");
+		%libname = loadSybLibs("$SYBASE/$libdir");
 
 		my $libtype = '';
 
