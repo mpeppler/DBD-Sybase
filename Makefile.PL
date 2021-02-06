@@ -153,7 +153,7 @@ sub configure {
 	}
 	foreach my $l ( @libdir ) {
 		if ( -d "$SYBASE/$l" ) {
-			if ( checkLib($SYBASE) ) {
+			if ( checkLib("$SYBASE/$l") ) {
 				$libdir   = $l;
 			}
 		}
@@ -420,7 +420,7 @@ sub getExtraLibs {
 sub checkLib {
 	my $dir = shift;
 
-	opendir( DIR, "$dir/$libdir" ) || die "Can't access $dir/$libdir: $!";
+	opendir( DIR, "$dir" ) || die "Can't access $dir: $!";
 	my @files = grep( /libct|libsybct/i, readdir(DIR) );
 	closedir(DIR);
 	if ( grep( /libsybct/, @files ) ) {
