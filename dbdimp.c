@@ -5187,6 +5187,12 @@ static CS_NUMERIC to_numeric(char *str, CS_LOCALE *locale, CS_DATAFMT *datafmt,
   srcfmt.format = CS_FMT_NULLTERM;
   srcfmt.locale = locale;
 
+  /* According to  https://github.com/mpeppler/DBD-Sybase/issues/31 we need to set the 
+     datafmt.maxlength value to 35. This is not needed with Sybase client libs, but 
+     with freetds and with MS-SQL servers.
+  */
+  datafmt.maxlength = 35;
+     
   if (type) { /* RPC call */
     if ((p = strchr(str, '.'))) {
       datafmt->scale = strlen(p + 1);
