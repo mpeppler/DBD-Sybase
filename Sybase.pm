@@ -402,16 +402,15 @@
 				sql_datetime_sub   => 16,
 				num_prec_radix     => 17,
 				interval_precision => 18,
+        USERTYPE           => 19
 			},
 		];
 
-		# ASE 11.x only returns 13 columns:
-		my $c;
-		if ( ( $c = scalar( @{ $data->[0] } ) ) < 19 ) {
-			foreach ( keys( %{ $ti->[0] } ) ) {
-				if ( $ti->[0]->{$_} >= $c ) {
-					delete( $ti->[0]->{$_} );
-				}
+		# ASE 11.x only returns 13 columns, MS-SQL return 20...
+    my $columnCount = @{$data->[0]};
+    foreach my $columnName ( keys( %{ $ti->[0] } ) ) {
+			if ( $ti->[0]->{$columnName} >= $columnCount ) {
+				delete( $ti->[0]->{$_} );
 			}
 		}
 		push( @$ti, @$data );
