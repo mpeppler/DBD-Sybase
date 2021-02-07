@@ -189,6 +189,12 @@ sub configure {
 	checkChainedAutoCommit();
 
 	#    print "OS = $^O\n";
+  my %libname = loadSybLibs("$SYBASE/$libdir",
+		                          $^O eq 'MSWin32' ? qr/lib/ :
+                              $^O eq 'VMS'     ? qr/olb/ :
+                						  qr/(?:so|a|sl)/);
+
+  my $libtype = '';
 
 	if ( $^O eq 'MSWin32' ) {
     if ($version ge '15') {
@@ -232,11 +238,6 @@ sub configure {
 			$lib_string =~ s/-ltcl/-lsybtcl/;
 		}
 
-		my %libname;
-
-		%libname = loadSybLibs("$SYBASE/$libdir");
-
-		my $libtype = '';
 
 		# Logic to replace normal libs with _r (re-entrant) libs if
 		# usethreads is defined provided by W. Phillip Moore (wpm@ms.com)
@@ -292,19 +293,19 @@ sub configure {
 				$libtype .= '64';
 			}
 		}
-
-		# Is the blk library available?
-		#my @k = keys(%libname);
-		#print "@k\n";
-		#print "libtype = $libtype\n";
-		if ( my @l = grep( /(syb)?blk$libtype/, keys(%libname) ) ) {
-			print "BLK api available - found: @l\n";
-		}
-		else {
-			print "BLK api NOT available.\n";
-			$inc_string .= ' -DNO_BLK=1';
-		}
 	}
+
+  # Is the blk library available?
+  #my @k = keys(%libname);
+  #print "@k\n";
+  #print "libtype = $libtype\n";
+  if ( my @l = grep( /(syb)?blk$libtype/, keys(%libname) ) ) {
+    print "BLK api available - found: @l\n";
+  }
+  else {
+    print "BLK api NOT available.\n";
+    $inc_string .= ' -DNO_BLK=1';
+  }
 
 	my $config_sitearch  = $Config{sitearchexp};
 	my $attr_dbi_include = $attr{DBI_INCLUDE};
@@ -330,7 +331,7 @@ sub configure {
 }
 
 sub loadSybLibs {
-	my $dir = shift;
+	my ($dir, $extensionRegexp) = @_;
 
 	my %libname = ();
 
@@ -338,7 +339,7 @@ sub loadSybLibs {
 	  or die "Unable to opendir $dir: $!\n";
 	foreach ( readdir(SYBLIB) ) {
 		next unless -f "$dir/$_";
-		next unless /^lib(\S+)\.(so|a|sl)/;
+		next unless /^lib(\S+)\.$extentionRegexp/;
 		$libname{$1} = 1;
 	}
 
