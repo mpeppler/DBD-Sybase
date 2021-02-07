@@ -339,7 +339,7 @@ sub loadSybLibs {
 	  or die "Unable to opendir $dir: $!\n";
 	foreach ( readdir(SYBLIB) ) {
 		next unless -f "$dir/$_";
-		next unless /^lib(\S+)\.$extentionRegexp/;
+		next unless /^lib(\S+)\.$extensionRegexp/;
 		$libname{$1} = 1;
 	}
 
