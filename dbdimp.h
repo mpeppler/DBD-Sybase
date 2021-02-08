@@ -36,6 +36,10 @@ typedef struct _col_data {
 		CS_DATE d;
 		CS_TIME t;
 #endif
+#if defined(CS_BIGDATE_TYPE)
+    CS_BIGDATE bdt;
+    CS_BIGTIME bt;
+#endif
 		CS_MONEY mn;
 		CS_NUMERIC num;
 		CS_VOID *p;

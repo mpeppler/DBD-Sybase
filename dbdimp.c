@@ -118,10 +118,10 @@ static CS_RETCODE syb_blk_init(imp_dbh_t *imp_dbh, imp_sth_t *imp_sth);
 static void blkCleanUp(imp_sth_t *imp_sth, imp_dbh_t *imp_dbh);
 static int getTableName(char *statement, char *table, int maxwidth);
 static int toggle_autocommit(SV *dbh, imp_dbh_t *imp_dbh, int flag);
-static int datetime2str(CS_DATETIME *dt, CS_DATAFMT *srcfmt, char *buff, CS_INT len, int type, CS_LOCALE *locale);
+static int datetime2str(ColData *colData, CS_DATAFMT *srcfmt, char *buff, CS_INT len, int type, CS_LOCALE *locale);
 #if defined(CS_DATE_TYPE)
-static int date2str(CS_DATE *dt, CS_DATAFMT *srcfmt, char *buff, CS_INT len, int type, CS_LOCALE *locale);
-static int time2str(CS_TIME *dt, CS_DATAFMT *srcfmt, char *buff, CS_INT len, int type, CS_LOCALE *locale);
+static int date2str(ColData *colData, CS_DATAFMT *srcfmt, char *buff, CS_INT len, int type, CS_LOCALE *locale);
+static int time2str(ColData *colData, CS_DATAFMT *srcfmt, char *buff, CS_INT len, int type, CS_LOCALE *locale);
 #endif
 static int syb_get_date_fmt(imp_dbh_t *imp_dbh, char *fmt);
 static int cmd_execute(SV *sth, imp_sth_t *imp_sth);
@@ -694,6 +694,17 @@ static CS_INT get_cwidth(CS_DATAFMT *column) {
 #endif
     len = 40;
     break;
+
+#if 0
+// According to Sebastien Pardo (https://github.com/mpeppler/DBD-Sybase/issues/48) 
+// The following is needed to handle very large CS_NUMERIC values. Needs to be double
+// checked before being enabled as this code was removed between 1.09 and 1.15 and now I
+// can't remember why...
+  case CS_NUMERIC_TYPE:
+  case CS_DECIMAL_TYPE:
+    len = (CS_MAX_PREC + 2);
+    break;
+#endif
 
 #ifdef CS_UNIQUE_TYPE
     case CS_UNIQUE_TYPE:
@@ -3346,6 +3357,29 @@ static CS_RETCODE describe(SV* sth, imp_sth_t* imp_sth, int restype) {
       break;
 #endif
 
+#if defined(CS_BIGDATETIME_TYPE)
+		case CS_BIGDATETIME_TYPE:
+			imp_sth->datafmt[i].maxlength = sizeof(CS_BIGDATETIME);
+			imp_sth->datafmt[i].format = CS_FMT_UNUSED;
+			imp_sth->coldata[i].type = CS_BIGDATETIME_TYPE;
+			imp_sth->datafmt[i].datatype = CS_BIGDATETIME_TYPE;
+			retcode = ct_bind(imp_sth->cmd, (i + 1), &imp_sth->datafmt[i],
+					&imp_sth->coldata[i].value.bdt,
+					&imp_sth->coldata[i].valuelen,
+					&imp_sth->coldata[i].indicator);
+		break;
+		case CS_BIGTIME_TYPE:
+			imp_sth->datafmt[i].maxlength = sizeof(CS_BIGTIME);
+			imp_sth->datafmt[i].format = CS_FMT_UNUSED;
+			imp_sth->coldata[i].type = CS_BIGTIME_TYPE;
+			imp_sth->datafmt[i].datatype = CS_BIGTIME_TYPE;
+			retcode = ct_bind(imp_sth->cmd, (i + 1), &imp_sth->datafmt[i],
+					&imp_sth->coldata[i].value.bt,
+  				&imp_sth->coldata[i].valuelen,
+					&imp_sth->coldata[i].indicator);
+		break;
+#endif
+
     case CS_CHAR_TYPE:
     case CS_LONGCHAR_TYPE:
     case CS_VARCHAR_TYPE:
@@ -3749,6 +3783,15 @@ static void * alloc_datatype(CS_INT datatype, int *len) {
     bytes = sizeof(CS_UBIGINT);
     break;
 #endif
+#if defined(CS_BIGDATETIME_TYPE)
+  case CS_BIGDATETIME_TYPE:
+		bytes = sizeof(CS_BIGDATETIME);
+		break;
+	case CS_BIGTIME_TYPE:
+		bytes = sizeof(CS_BIGTIME);
+		break;
+#endif
+
   default:
     warn("alloc_datatype: unkown type: %d", datatype);
     return NULL;
@@ -4282,6 +4325,9 @@ AV * syb_st_fetch(SV *sth, imp_sth_t *imp_sth) {
           sv_catpvn(sv, imp_sth->coldata[i].value.c, len);
           break;
         case CS_DATETIME_TYPE:
+#if defined(CS_BIGDATETIME_TYPE)
+        case CS_BIGDATETIME_TYPE:
+#endif
           len = datetime2str(&imp_sth->coldata[i].value.dt,
               &imp_sth->datafmt[i], buff, DATE_BUFF_LEN,
               imp_dbh->dateFmt, LOCALE(imp_dbh));
@@ -4295,6 +4341,9 @@ AV * syb_st_fetch(SV *sth, imp_sth_t *imp_sth) {
           sv_setpvn(sv, buff, len);
           break;
         case CS_TIME_TYPE:
+#if defined(CS_BIGTIME_TYPE)
+        case CS_BIGTIME_TYPE:
+#endif
           len = time2str(&imp_sth->coldata[i].value.t,
               &imp_sth->datafmt[i], buff, DATE_BUFF_LEN,
               imp_dbh->dateFmt, LOCALE(imp_dbh));
@@ -5064,7 +5113,7 @@ int syb_st_STORE_attrib(SV *sth, imp_sth_t *imp_sth, SV *keysv, SV *valuesv) {
   return FALSE;
 }
 
-static int datetime2str(CS_DATETIME *dt, CS_DATAFMT *srcfmt, char *buff,
+static int datetime2str(ColData *colData, CS_DATAFMT *srcfmt, char *buff,
     CS_INT len, int type, CS_LOCALE *locale) {
   if (type == 0) {
     CS_DATAFMT dstfmt;
@@ -5074,12 +5123,25 @@ static int datetime2str(CS_DATETIME *dt, CS_DATAFMT *srcfmt, char *buff,
     dstfmt.maxlength = len;
     dstfmt.format = CS_FMT_NULLTERM;
     dstfmt.locale = locale;
-    cs_convert(context, srcfmt, dt, &dstfmt, buff, &len);
+    cs_convert(context, srcfmt, &colData->value.dt, &dstfmt, buff, &len);
 
     return len - 1;
   } else {
     CS_DATEREC rec;
-    cs_dt_crack(context, CS_DATETIME_TYPE, dt, &rec);
+    int type;
+    void *value;
+#if defined(CS_BIGDATETIME_TYPE) 
+    if(srcfmt->datatype == CS_BIGDATETIME_TYPE) {
+      type = CS_BIGDATETIME_TYPE;
+      value = &colDate->value.bdt;
+    } else 
+#endif
+    {
+      type = CS_DATETIME_TYPE;
+      value = &colDate->value.dt;
+    }
+
+    cs_dt_crack(context, type, value, &rec);
     if (type == 2) {
       sprintf(buff, "%4.4d-%2.2d-%2.2dT%2.2d:%2.2d:%2.2d.%3.3dZ",
           rec.dateyear, rec.datemonth + 1, rec.datedmonth,
@@ -5133,7 +5195,7 @@ static int date2str(CS_DATE *d, CS_DATAFMT *srcfmt, char *buff, CS_INT len,
   return 0;
 }
 
-static int time2str(CS_TIME *t, CS_DATAFMT *srcfmt, char *buff, CS_INT len,
+static int time2str(ColData *colData, CS_DATAFMT *srcfmt, char *buff, CS_INT len,
     int type, CS_LOCALE *locale) {
   if (type == 0) {
     CS_DATAFMT dstfmt;
@@ -5143,12 +5205,25 @@ static int time2str(CS_TIME *t, CS_DATAFMT *srcfmt, char *buff, CS_INT len,
     dstfmt.maxlength = len;
     dstfmt.format = CS_FMT_NULLTERM;
     dstfmt.locale = locale;
-    cs_convert(context, srcfmt, t, &dstfmt, buff, &len);
+    cs_convert(context, srcfmt, &colData->value.t, &dstfmt, buff, &len);
 
     return len - 1;
   } else {
     CS_DATEREC rec;
-    cs_dt_crack(context, CS_TIME_TYPE, t, &rec);
+    int type;
+    void *value;
+#if defined(CS_BIGTIME_TYPE)
+    if (srcfmt.datatype == CS_BIGTIME_TYPE) {
+      type = CS_BIGTIME_TYPE;
+      value = &colData->value.bt;
+    } else
+#endif
+    {
+      type = CS_TIME_TYPE;
+      value = &colData->value.bt;
+    }
+
+    cs_dt_crack(context, type, value, &rec);
     if (type == 2) {
       sprintf(buff, "%4.4d-%2.2d-%2.2dT%2.2d:%2.2d:%2.2d.%3.3dZ",
           rec.dateyear, rec.datemonth + 1, rec.datedmonth,
@@ -5825,9 +5900,15 @@ static int map_syb_types(int syb_type) {
 #endif
   case CS_DATETIME_TYPE:
   case CS_DATETIME4_TYPE:
+#if defined(CS_BIGDATE_TYPE)
+  case CS_BIGDATE_TYPE:
+#endif
     return 9;
 #if defined(CS_TIME_TYPE)
   case CS_TIME_TYPE:
+#if defined(CS_BIGTIME_TYPE)
+  case CS_BIGTIME_TYPE:
+#endif
     return 10;
 #endif
   case CS_MONEY_TYPE:
