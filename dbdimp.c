@@ -5128,20 +5128,20 @@ static int datetime2str(ColData *colData, CS_DATAFMT *srcfmt, char *buff,
     return len - 1;
   } else {
     CS_DATEREC rec;
-    int type;
+    int datatype;
     void *value;
 #if defined(CS_BIGDATETIME_TYPE) 
     if(srcfmt->datatype == CS_BIGDATETIME_TYPE) {
-      type = CS_BIGDATETIME_TYPE;
+      datatype = CS_BIGDATETIME_TYPE;
       value = &colData->value.bdt;
     } else 
 #endif
     {
-      type = CS_DATETIME_TYPE;
+      datatype = CS_DATETIME_TYPE;
       value = &colData->value.dt;
     }
 
-    cs_dt_crack(context, type, value, &rec);
+    cs_dt_crack(context, datatype, value, &rec);
     if (type == 2) {
       sprintf(buff, "%4.4d-%2.2d-%2.2dT%2.2d:%2.2d:%2.2d.%3.3dZ",
           rec.dateyear, rec.datemonth + 1, rec.datedmonth,
@@ -5210,20 +5210,20 @@ static int time2str(ColData *colData, CS_DATAFMT *srcfmt, char *buff, CS_INT len
     return len - 1;
   } else {
     CS_DATEREC rec;
-    int type;
+    int datatype;
     void *value;
 #if defined(CS_BIGTIME_TYPE)
     if (srcfmt->datatype == CS_BIGTIME_TYPE) {
-      type = CS_BIGTIME_TYPE;
+      datatype = CS_BIGTIME_TYPE;
       value = &colData->value.bt;
     } else
 #endif
     {
-      type = CS_TIME_TYPE;
+      datatype = CS_TIME_TYPE;
       value = &colData->value.bt;
     }
 
-    cs_dt_crack(context, type, value, &rec);
+    cs_dt_crack(context, datatype, value, &rec);
     if (type == 2) {
       sprintf(buff, "%4.4d-%2.2d-%2.2dT%2.2d:%2.2d:%2.2d.%3.3dZ",
           rec.dateyear, rec.datemonth + 1, rec.datedmonth,
