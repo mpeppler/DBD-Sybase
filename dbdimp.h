@@ -36,7 +36,7 @@ typedef struct _col_data {
 		CS_DATE d;
 		CS_TIME t;
 #endif
-#if defined(CS_BIGDATE_TYPE)
+#if defined(CS_BIGDATETIME_TYPE)
     CS_BIGDATE bdt;
     CS_BIGTIME bt;
 #endif
