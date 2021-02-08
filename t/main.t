@@ -9,7 +9,7 @@ use _test;
 
 use strict;
 
-use Test::More tests=>36; 
+use Test::More tests=>38; 
 #use Test::More qw(no_plan);
 
 use Data::Dumper;
@@ -211,7 +211,7 @@ SKIP: {
 }
 
 SKIP: {
-    skip 'requires ASE 15.5 ', 2 if $dbh->{syb_server_version} lt '15.5' || $dbh->{syb_server_version} eq 'Unknown';
+    skip 'requires ASE 15.5 ', 4 if $dbh->{syb_server_version} lt '15.5' || $dbh->{syb_server_version} eq 'Unknown';
     $dbh->{PrintError} = 1;
     $dbh->syb_date_fmt('LONGMS');
     my $sth = $dbh->prepare("select current_bigdatetime(), current_bigtime()");
@@ -224,8 +224,6 @@ SKIP: {
 
     $dbh->syb_date_fmt('ISO');
 
-    $dbh->{PrintError} = 1;
-    $dbh->syb_date_fmt('LONGMS');
     my $sth = $dbh->prepare("select current_bigdatetime(), current_bigtime()");
     $sth->execute;
     while(my $r = $sth->fetch) {
