@@ -120,7 +120,7 @@ static int getTableName(char *statement, char *table, int maxwidth);
 static int toggle_autocommit(SV *dbh, imp_dbh_t *imp_dbh, int flag);
 static int datetime2str(ColData *colData, CS_DATAFMT *srcfmt, char *buff, CS_INT len, int type, CS_LOCALE *locale);
 #if defined(CS_DATE_TYPE)
-static int date2str(CS_DATE_TYPE *d, CS_DATAFMT *srcfmt, char *buff, CS_INT len, int type, CS_LOCALE *locale);
+static int date2str(CS_DATE *d, CS_DATAFMT *srcfmt, char *buff, CS_INT len, int type, CS_LOCALE *locale);
 static int time2str(ColData *colData, CS_DATAFMT *srcfmt, char *buff, CS_INT len, int type, CS_LOCALE *locale);
 #endif
 static int syb_get_date_fmt(imp_dbh_t *imp_dbh, char *fmt);
@@ -5213,7 +5213,7 @@ static int time2str(ColData *colData, CS_DATAFMT *srcfmt, char *buff, CS_INT len
     int type;
     void *value;
 #if defined(CS_BIGTIME_TYPE)
-    if (srcfmt.datatype == CS_BIGTIME_TYPE) {
+    if (srcfmt->datatype == CS_BIGTIME_TYPE) {
       type = CS_BIGTIME_TYPE;
       value = &colData->value.bt;
     } else
