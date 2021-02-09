@@ -4328,7 +4328,7 @@ AV * syb_st_fetch(SV *sth, imp_sth_t *imp_sth) {
 #if defined(CS_BIGDATETIME_TYPE)
         case CS_BIGDATETIME_TYPE:
 #endif
-          len = datetime2str(&imp_sth->coldata[i].value.dt,
+          len = datetime2str(&imp_sth->coldata[i],
               &imp_sth->datafmt[i], buff, DATE_BUFF_LEN,
               imp_dbh->dateFmt, LOCALE(imp_dbh));
           sv_setpvn(sv, buff, len);
@@ -4344,7 +4344,7 @@ AV * syb_st_fetch(SV *sth, imp_sth_t *imp_sth) {
 #if defined(CS_BIGTIME_TYPE)
         case CS_BIGTIME_TYPE:
 #endif
-          len = time2str(&imp_sth->coldata[i].value.t,
+          len = time2str(&imp_sth->coldata[i],
               &imp_sth->datafmt[i], buff, DATE_BUFF_LEN,
               imp_dbh->dateFmt, LOCALE(imp_dbh));
           sv_setpvn(sv, buff, len);
@@ -5115,6 +5115,7 @@ int syb_st_STORE_attrib(SV *sth, imp_sth_t *imp_sth, SV *keysv, SV *valuesv) {
 
 static int datetime2str(ColData *colData, CS_DATAFMT *srcfmt, char *buff,
     CS_INT len, int type, CS_LOCALE *locale) {
+
   if (type == 0) {
     CS_DATAFMT dstfmt;
 
