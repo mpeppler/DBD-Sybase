@@ -40,9 +40,11 @@ configure();
 configPwd();
 
 my $lddlflags = $Config{lddlflags};
-$lddlflags = "-L$SYBASE/$libdir $lddlflags" unless $^O eq 'VMS';
+# According to https://github.com/mpeppler/DBD-Sybase/issues/62 we don't need to set
+# lddlflags or ldflags on Windows.
+$lddlflags = "-L$SYBASE/$libdir $lddlflags" unless $^O eq 'VMS' || $^O eq 'MSWin32';
 my $ldflags = $Config{ldflags};
-$ldflags = "-L$SYBASE/$libdir $ldflags" unless $^O eq 'VMS';
+$ldflags = "-L$SYBASE/$libdir $ldflags" unless $^O eq 'VMS' || $^O eq 'MSWin32';
 
 WriteMakefile(
   'NAME'    => 'DBD::Sybase',
