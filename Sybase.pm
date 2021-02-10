@@ -371,8 +371,15 @@
     return 1;
   }
 
+  # Allows us to cache this data as it is static.
+  my @type_info;
+
   sub type_info_all {
     my ($dbh) = @_;
+
+    if(scalar(@type_info) > 0) {
+      return \@type_info;
+    }
 
    # Calling sp_datatype_info returns the appropriate data for the server that
    # we are currently connected to.
@@ -418,7 +425,10 @@
     }
     push( @$ti, @$data );
 
-    return $ti;
+    foreach (@$ti) {
+      push(@type_info, $_);
+    }
+    return \@type_info;
   }
 
   # First straight port of DBlib::nsql.
