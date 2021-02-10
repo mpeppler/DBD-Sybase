@@ -3355,7 +3355,19 @@ static CS_RETCODE describe(SV* sth, imp_sth_t* imp_sth, int restype) {
     case CS_DECIMAL_TYPE:
     default:
       imp_sth->datafmt[i].maxlength = get_cwidth(&imp_sth->datafmt[i]) + 1;
-      /*display_dlen(&imp_sth->datafmt[i]) + 1;*/
+      /*
+        MS-SQL has a varchar(max) type that will return the maxlength as INT_MAX. The +1 above will
+        cause this to overflow and result in a negative value.
+      */
+      if (imp_sth->datafmt[i].maxlength < 0) {
+        /* Note that this is still going to try to allocate a really large buffer, so this won't really solve
+           the issue of how any varchar(max) columns are retrieved.
+           For text/image data this is normally handled via the TEXTLIMIT option which caps the size of any 
+           retrieved data to something reasonable that the client app/program can be expected to handle.
+        */
+        imp_sth->datafmt[i].maxlength = INT_MAX;
+      }
+      
       imp_sth->datafmt[i].format = CS_FMT_UNUSED;
       New(902, imp_sth->coldata[i].value.c, imp_sth->datafmt[i].maxlength, char);
       imp_sth->coldata[i].type = CS_CHAR_TYPE;
