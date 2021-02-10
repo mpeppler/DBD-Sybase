@@ -19,6 +19,10 @@ use vars qw($SYBASE $inc_string $lib_string $LINKTYPE $written_pwd_file
 $LINKTYPE         = 'dynamic';
 $written_pwd_file = 'PWD';
 
+# regexp to find libct/libsybct, and avoid picking up libct_cu which isn't anything we want at all...
+# https://github.com/mpeppler/DBD-Sybase/issues/64
+my $libct_re = qr/\blib(syb)?ct(64)?\./i;
+
 #$libdir           = 'lib';
 
 my $file;
@@ -356,7 +360,7 @@ sub getLibVersion {
   opendir( DIR, $lib );
 
   # reverse to pick up libsybct before libct...
-  my @files = reverse( grep( /lib(syb)?ct(64)?\./, readdir(DIR) ) );
+  my @files = reverse( grep( /$libct_re/, readdir(DIR) ) );
   closedir(DIR);
   my $file;
   foreach (@files) {
@@ -423,7 +427,7 @@ sub checkLib {
   my $dir = shift;
 
   opendir( DIR, "$dir" ) || die "Can't access $dir: $!";
-  my @files = grep( /libct|libsybct/i, readdir(DIR) );
+  my @files = grep( /$libct_re/i, readdir(DIR) );
   closedir(DIR);
   if ( grep( /libsybct/, @files ) ) {
     $newlibnames = 1;
