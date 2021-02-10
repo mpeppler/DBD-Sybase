@@ -377,7 +377,7 @@
   sub type_info_all {
     my ($dbh) = @_;
 
-    if(defined(@type_info) && scalar(@type_info) > 0) {
+    if(scalar(@type_info) > 0) {
       return \@type_info;
     }
 
