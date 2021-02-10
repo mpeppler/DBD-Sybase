@@ -25,13 +25,11 @@ my $file;
 my $chained;
 my $threaded_libs;
 my $accept_test_defaults;
-# Changed the boolean options to be actual boolean flags
-# See https://github.com/mpeppler/DBD-Sybase/issues/63
 GetOptions(
-  '--file'                  => \$file,
-  '--chained!'              => \$chained,
-  '--threaded_libs!'        => \$threaded_libs,
-  '--accept_test_defaults!' => \$accept_test_defaults
+  '--file'                 => \$file,
+  '--chained:s'            => \$chained,
+  '--threaded_libs:s'      => \$threaded_libs,
+  '--accept_test_defaults' => \$accept_test_defaults
 );
 
 select(STDOUT);
@@ -495,11 +493,7 @@ EOF
 }
 
 sub checkChainedAutoCommit {
-  my $ans;
-  if ( defined($chained) ) {
-    $ans = $chained ? 'y' : 'n';
-  } else {
-    print <<EOF;
+  print <<EOF;
 
 By default DBD::Sybase 1.05 and later use the 'CHAINED' mode (where available)
 when 'AutoCommit' is turned off. Versions 1.04 and older instead managed
@@ -509,10 +503,13 @@ Sybase implements AutoCommit handling for both its ODBC and JDBC drivers.
 
 EOF
   print "Use 'CHAINED' mode by default (Y/N) [Y]: ";
+  my $ans;
+  if ( defined($chained) ) {
+    $ans = $chained;
+  } else {
     $ans = getAns(0);
   }
   if ( $ans and $ans !~ /^y/i ) {
-    print "Avoiding 'CHAINED' mode.\n";
     $inc_string .= " -DNO_CHAINED_TRAN=1";
   }
   print "\n";
@@ -522,12 +519,6 @@ sub checkForThreadedLibs {
   my $ret = 1;
   if ( $] >= 5.008 ) {
     $ret = 0;
-
-    my $ans;
-
-    if ( defined($threaded_libs) ) {
-      $ans = $threaded_libs ? 'y' : 'n';
-    } else {
 
     print <<EOF;
 
@@ -541,6 +532,11 @@ reasonable behavior for signal handling.
 
 EOF
     print "Use the threaded (lib..._r) libraries [N]: ";
+    my $ans;
+
+    if ( defined($threaded_libs) ) {
+      $ans = $threaded_libs;
+    } else {
       $ans = getAns(0);
     }
     if ( $ans and $ans =~ /^y/i ) {
