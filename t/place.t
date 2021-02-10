@@ -81,12 +81,14 @@ SKIP: {
 
 SKIP: {
     skip 'requires ASE 15 ', 1 if $dbh->{syb_server_version} lt '15' || $dbh->{syb_server_version} eq 'Unknown';
-    $dbh->do("create table #t2(t1 tinyint, t2 bigint");
+    $dbh->do("create table #t2(t1 tinyint, t2 bigint)");
+    
     my $sth3 = $dbh->prepare("insert #t2 values(?, ?)");
-    $sth3->bind_param(1, 1, SQL_TINYINT;
-    $sth3->bind_param(2, 3, SQL_BIGINT);
+    $sth3->bind_param(1, 1); #, SQL_TINYINT);
+    $sth3->bind_param(2, 3); #, SQL_BIGINT);
     my $rc = $sth3->execute();
     ok($rc, "insert bigint");
+  }
 }
 $dbh->disconnect;
 

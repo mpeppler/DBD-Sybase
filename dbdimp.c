@@ -5401,6 +5401,15 @@ static int _dbd_rebind_ph(SV *sth, imp_sth_t *imp_sth, phs_t *phs, int maxlen) {
       value = &i_value;
       value_len = 4;
       break;
+#if defined(CS_BIGINT_TYPE)
+    case CS_BIGINT_TYPE:
+      // Temporary hack - bigint can of course be much bigger than an int!
+      phs->datafmt.datatype = CS_INT_TYPE;
+      i_value = atoi(phs->sv_buf);
+      value = &i_value;
+      value_len = 4;
+      break;
+#endif
     case CS_NUMERIC_TYPE:
     case CS_DECIMAL_TYPE:
       n_value = to_numeric(phs->sv_buf, LOCALE(imp_dbh), &phs->datafmt,
