@@ -3785,11 +3785,11 @@ static void * alloc_datatype(CS_INT datatype, int *len) {
 #endif
 #if defined(CS_BIGDATETIME_TYPE)
   case CS_BIGDATETIME_TYPE:
-		bytes = sizeof(CS_BIGDATETIME);
-		break;
-	case CS_BIGTIME_TYPE:
-		bytes = sizeof(CS_BIGTIME);
-		break;
+    bytes = sizeof(CS_BIGDATETIME);
+    break;
+  case CS_BIGTIME_TYPE:
+    bytes = sizeof(CS_BIGTIME);
+    break;
 #endif
 
   default:
