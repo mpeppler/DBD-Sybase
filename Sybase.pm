@@ -371,7 +371,7 @@
     return 1;
   }
 
-  // Allows us to cache this data as it is static.
+  # Allows us to cache this data as it is static.
   my @type_info;
 
   sub type_info_all {
