@@ -5846,7 +5846,7 @@ static int map_syb_types(int syb_type) {
     return SQL_DATE;
 #endif
 #if defined(CS_BIGDATETIME_TYPE)
-  case CS_BIGDATETIME:
+  case CS_BIGDATETIME_TYPE:
 #endif
   case CS_DATETIME_TYPE:
   case CS_DATETIME4_TYPE:
@@ -5860,7 +5860,7 @@ static int map_syb_types(int syb_type) {
 #endif
   case CS_MONEY_TYPE:
   case CS_MONEY4_TYPE:
-    return SQL_DECIMAL;
+    return SQL_DECIMAL_TYPE;
   case CS_NUMERIC_TYPE:
     return SQL_NUMERIC;
   case CS_DECIMAL_TYPE:
