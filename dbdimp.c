@@ -5340,6 +5340,9 @@ static int _dbd_rebind_ph(SV *sth, imp_sth_t *imp_sth, phs_t *phs, int maxlen) {
   void *value;
   CS_NUMERIC n_value;
   CS_MONEY m_value;
+#if defined(CS_BIGINT_TYPE)
+  CS_BIGINT bi_value;
+#endif
   CS_INT datatype;
   int free_value = 0;
 
@@ -5403,11 +5406,12 @@ static int _dbd_rebind_ph(SV *sth, imp_sth_t *imp_sth, phs_t *phs, int maxlen) {
       break;
 #if defined(CS_BIGINT_TYPE)
     case CS_BIGINT_TYPE:
-      // Temporary hack - bigint can of course be much bigger than an int!
-      phs->datafmt.datatype = CS_INT_TYPE;
-      i_value = atoi(phs->sv_buf);
-      value = &i_value;
-      value_len = 4;
+      // A CS_BIGINT is defined as long long, or _int64_t or various other typedefs
+      // depending on the platform - so taking a guess here that atoll() will work!
+      phs->datafmt.datatype = CS_BIGINT_TYPE;
+      bi_value = atoll(phs->sv_buf);
+      value = &bi_value;
+      value_len = 8;
       break;
 #endif
     case CS_NUMERIC_TYPE:
