@@ -5834,7 +5834,7 @@ static int map_syb_types(int syb_type) {
   case CS_SMALLINT_TYPE:
     return SQL_SMALLINT;
   case CS_INT_TYPE:
-    return SQL_INT;
+    return SQL_INTEGER;
   case CS_BIGINT_TYPE:
     return SQL_BIGINT;
   case CS_REAL_TYPE:
