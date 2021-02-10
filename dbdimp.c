@@ -5791,8 +5791,15 @@ static int map_sql_types(int sql_type) {
   case SQL_BIT:
   case SQL_INTEGER:
   case SQL_SMALLINT:
+  case SQL_TINYINT:
     ret = CS_INT_TYPE;
     break;
+#if defined(CS_BIGINT_TYPE)    
+  case SQL_BIGINT:
+    ret = CS_BIGINT_TYPE;
+    break;
+#endif
+
   case SQL_FLOAT:
   case SQL_REAL:
   case SQL_DOUBLE:
@@ -5811,48 +5818,57 @@ static int map_sql_types(int sql_type) {
 static int map_syb_types(int syb_type) {
   switch (syb_type) {
   case CS_CHAR_TYPE:
-    return 1;
+    return SQL_CHAR;
   case CS_BINARY_TYPE:
-    return -2;
+    return SQL_BINARY;
     /*    case CS_LONGCHAR_TYPE:	return SQL_CHAR; * XXX */
     /*    case CS_LONGBINARY_TYPE:	return SQL_BINARY; * XXX */
   case CS_TEXT_TYPE:
-    return -1; /* XXX */
+    return SQL_LONGVARCHAR; /* XXX */
   case CS_IMAGE_TYPE:
-    return -4; /* XXX */
+    return SQL_LONGVARBINARY; /* XXX */
   case CS_BIT_TYPE:
-    return -7;
+    return SQL_BIT;
   case CS_TINYINT_TYPE:
-    return -6;
+    return SQL_TINYINT;
   case CS_SMALLINT_TYPE:
-    return 5;
+    return SQL_SMALLINT;
   case CS_INT_TYPE:
-    return 4;
+    return SQL_INT;
+  case CS_BIGINT_TYPE:
+    return SQL_BIGINT;
   case CS_REAL_TYPE:
-    return 7;
+    return SQL_REAL;
   case CS_FLOAT_TYPE:
-    return 6;
+    return SQL_FLOAT;
 #if defined(CS_DATE_TYPE)
   case CS_DATE_TYPE:
+    return SQL_DATE;
+#endif
+#if defined(CS_BIGDATETIME_TYPE)
+  case CS_BIGDATETIME:
 #endif
   case CS_DATETIME_TYPE:
   case CS_DATETIME4_TYPE:
-    return 9;
+    return SQL_DATETIME;
+#if defined(CS_BIGTIME_TYPE)
+  case CS_BIGTIME_TYPE:
+#endif
 #if defined(CS_TIME_TYPE)
   case CS_TIME_TYPE:
-    return 10;
+    return SQL_TIME;
 #endif
   case CS_MONEY_TYPE:
   case CS_MONEY4_TYPE:
-    return 3;
+    return SQL_DECIMAL;
   case CS_NUMERIC_TYPE:
-    return 2;
+    return SQL_NUMERIC;
   case CS_DECIMAL_TYPE:
-    return 3;
+    return CS_DECIMAL;
   case CS_VARCHAR_TYPE:
-    return 12;
+    return SQL_VARCHAR;
   case CS_VARBINARY_TYPE:
-    return -3;
+    return SQL_VARBINARY;
     /*    case CS_TIMESTAMP_TYPE:     return -3;  */
 
   default:
