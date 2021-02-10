@@ -5860,11 +5860,10 @@ static int map_syb_types(int syb_type) {
 #endif
   case CS_MONEY_TYPE:
   case CS_MONEY4_TYPE:
-    return SQL_DECIMAL_TYPE;
+  case CS_DECIMAL_TYPE:
+    return SQL_DECIMAL;
   case CS_NUMERIC_TYPE:
     return SQL_NUMERIC;
-  case CS_DECIMAL_TYPE:
-    return CS_DECIMAL;
   case CS_VARCHAR_TYPE:
     return SQL_VARCHAR;
   case CS_VARBINARY_TYPE:
