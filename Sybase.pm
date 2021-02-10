@@ -228,19 +228,28 @@
     my $table   = $dbh->quote(shift);
     my $type    = $dbh->quote(shift);
 
-    my $sth = $dbh->prepare("sp_tables $table, $schema, $catalog, $type");
-
-    # Another possibility would be:
-    #           select TABLE_QUALIFIER = NULL
-    #                , TABLE_OWNER     = u.name
-    #                , TABLE_NAME      = o.name
-    #                , TABLE_TYPE      = o.type  -- XXX
-    #                , REMARKS         = NULL
-    #             from sysobjects o
-    #                , sysusers   u
-    #            where o.type in ('U', 'V', 'S')
-    #              and o.uid = u.uid
-
+    # https://github.com/mpeppler/DBD-Sybase/issues/53
+    # sp_tables is broken in ASE 15 and later...
+    #my $sth = $dbh->prepare("sp_tables $table, $schema, $catalog, $type");
+ 
+    my $sth = $dbh->prepare( q{
+          select TABLE_QUALIFIER = db_name()
+               , TABLE_OWNER     = u.name
+               , TABLE_NAME      = o.name
+               , TABLE_TYPE      =
+                   case o.type
+                       when "U" then "TABLE"
+                       when "V" then "VIEW"
+                       when "S" then "SYSTEM TABLE"
+                   end
+               , REMARKS         = NULL
+            from sysobjects o
+              join sysusers   u
+                on u.uid = o.uid
+           where o.type in ('U', 'V', 'S')
+                  and o.id > 99
+             });
+ 
     $sth->execute;
     $sth;
   }
