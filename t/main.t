@@ -9,7 +9,7 @@ use _test;
 
 use strict;
 
-use Test::More tests=>36; 
+use Test::More tests=>38; 
 #use Test::More qw(no_plan);
 
 use Data::Dumper;
@@ -204,23 +204,34 @@ SKIP: {
     my $sth = $dbh->prepare("select convert(unsigned smallint, power(2, 15)), convert(bigint, power(convert(bigint, 2), 32))");
     $sth->execute;
     while(my $r = $sth->fetch) {
-	print "@$r\n";
-	ok($r->[0] == 32768, "unsigned smallint");
-	ok($r->[1] == 4294967296, "bigint");
+	    print "@$r\n";
+	    ok($r->[0] == 32768, "unsigned smallint");
+	    ok($r->[1] == 4294967296, "bigint");
     }
 }
 
 SKIP: {
-    skip 'requires ASE 15.5 ', 2 if $dbh->{syb_server_version} lt '15.5' || $dbh->{syb_server_version} eq 'Unknown';
+    skip 'requires ASE 15.5 ', 4 if $dbh->{syb_server_version} lt '15.5' || $dbh->{syb_server_version} eq 'Unknown';
     $dbh->{PrintError} = 1;
     $dbh->syb_date_fmt('LONGMS');
     my $sth = $dbh->prepare("select current_bigdatetime(), current_bigtime()");
     $sth->execute;
     while(my $r = $sth->fetch) {
-    print "@$r\n";
-    ok(1 == 1, "bigdatetime");
-    ok(1 == 1, "bigtime");
+      print "@$r\n";
+      ok(1 == 1, "bigdatetime");
+      ok(1 == 1, "bigtime");
     }
+
+    $dbh->syb_date_fmt('ISO');
+
+    my $sth = $dbh->prepare("select current_bigdatetime(), current_bigtime()");
+    $sth->execute;
+    while(my $r = $sth->fetch) {
+      print "@$r\n";
+      ok(1 == 1, "bigdatetime");
+      ok(1 == 1, "bigtime");
+    }
+
 }
 
 
