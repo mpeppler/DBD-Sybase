@@ -1999,7 +1999,7 @@ Manual for more information on the set command and on the arithabort option.
 =item $bool = $dbh->syb_isdead
 
 Tests the connection to see if the connection has been marked DEAD by OpenClient.
-The connection can get marked DEAD if an error occurs on the connection, or the connection fails.
+The connection can get marked DEAD if an error occurs on the connection, or the connection fails.
 
 =back
 
