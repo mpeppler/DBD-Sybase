@@ -4390,11 +4390,13 @@ AV * syb_st_fetch(SV *sth, imp_sth_t *imp_sth) {
 
     if (restype == CS_CMD_DONE || restype == CS_CMD_FAIL) {
       return Nullav;
-    } else { /* XXX What to do here??? */
-      /*	      if(fix_fbav(imp_sth, num_fields, av))
-       clear_cache(sth, imp_sth);*/
-
+    } else { 
       if (restype == CS_COMPUTE_RESULT) {
+        /*
+          A compute result will most likely have a different (smaller) number 
+          of columns
+        */
+        num_fields = imp_sth->numCols;
         goto TryAgain;
       }
 
