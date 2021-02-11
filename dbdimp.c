@@ -3389,7 +3389,19 @@ static CS_RETCODE describe(SV* sth, imp_sth_t* imp_sth, int restype) {
     case CS_DECIMAL_TYPE:
     default:
       imp_sth->datafmt[i].maxlength = get_cwidth(&imp_sth->datafmt[i]) + 1;
-      /*display_dlen(&imp_sth->datafmt[i]) + 1;*/
+      /*
+        MS-SQL has a varchar(max) type that will return the maxlength as INT_MAX. The +1 above will
+        cause this to overflow and result in a negative value.
+      */
+      if (imp_sth->datafmt[i].maxlength < 0) {
+        /* Note that this is still going to try to allocate a really large buffer, so this won't really solve
+           the issue of how any varchar(max) columns are retrieved.
+           For text/image data this is normally handled via the TEXTLIMIT option which caps the size of any 
+           retrieved data to something reasonable that the client app/program can be expected to handle.
+        */
+        imp_sth->datafmt[i].maxlength = INT_MAX;
+      }
+      
       imp_sth->datafmt[i].format = CS_FMT_UNUSED;
       New(902, imp_sth->coldata[i].value.c, imp_sth->datafmt[i].maxlength, char);
       imp_sth->coldata[i].type = CS_CHAR_TYPE;
@@ -5404,6 +5416,9 @@ static int _dbd_rebind_ph(SV *sth, imp_sth_t *imp_sth, phs_t *phs, int maxlen) {
   void *value;
   CS_NUMERIC n_value;
   CS_MONEY m_value;
+#if defined(CS_BIGINT_TYPE)
+  CS_BIGINT bi_value;
+#endif
   CS_INT datatype;
   int free_value = 0;
 
@@ -5465,6 +5480,16 @@ static int _dbd_rebind_ph(SV *sth, imp_sth_t *imp_sth, phs_t *phs, int maxlen) {
       value = &i_value;
       value_len = 4;
       break;
+#if defined(CS_BIGINT_TYPE)
+    case CS_BIGINT_TYPE:
+      // A CS_BIGINT is defined as long long, or _int64_t or various other typedefs
+      // depending on the platform - so taking a guess here that atoll() will work!
+      phs->datafmt.datatype = CS_BIGINT_TYPE;
+      bi_value = atoll(phs->sv_buf);
+      value = &bi_value;
+      value_len = 8;
+      break;
+#endif
     case CS_NUMERIC_TYPE:
     case CS_DECIMAL_TYPE:
       n_value = to_numeric(phs->sv_buf, LOCALE(imp_dbh), &phs->datafmt,
@@ -5855,8 +5880,15 @@ static int map_sql_types(int sql_type) {
   case SQL_BIT:
   case SQL_INTEGER:
   case SQL_SMALLINT:
+  case SQL_TINYINT:
     ret = CS_INT_TYPE;
     break;
+#if defined(CS_BIGINT_TYPE)    
+  case SQL_BIGINT:
+    ret = CS_BIGINT_TYPE;
+    break;
+#endif
+
   case SQL_FLOAT:
   case SQL_REAL:
   case SQL_DOUBLE:
@@ -5875,54 +5907,56 @@ static int map_sql_types(int sql_type) {
 static int map_syb_types(int syb_type) {
   switch (syb_type) {
   case CS_CHAR_TYPE:
-    return 1;
+    return SQL_CHAR;
   case CS_BINARY_TYPE:
-    return -2;
+    return SQL_BINARY;
     /*    case CS_LONGCHAR_TYPE:	return SQL_CHAR; * XXX */
     /*    case CS_LONGBINARY_TYPE:	return SQL_BINARY; * XXX */
   case CS_TEXT_TYPE:
-    return -1; /* XXX */
+    return SQL_LONGVARCHAR; /* XXX */
   case CS_IMAGE_TYPE:
-    return -4; /* XXX */
+    return SQL_LONGVARBINARY; /* XXX */
   case CS_BIT_TYPE:
-    return -7;
+    return SQL_BIT;
   case CS_TINYINT_TYPE:
-    return -6;
+    return SQL_TINYINT;
   case CS_SMALLINT_TYPE:
-    return 5;
+    return SQL_SMALLINT;
   case CS_INT_TYPE:
-    return 4;
+    return SQL_INTEGER;
+  case CS_BIGINT_TYPE:
+    return SQL_BIGINT;
   case CS_REAL_TYPE:
-    return 7;
+    return SQL_REAL;
   case CS_FLOAT_TYPE:
-    return 6;
+    return SQL_FLOAT;
 #if defined(CS_DATE_TYPE)
   case CS_DATE_TYPE:
+    return SQL_DATE;
+#endif
+#if defined(CS_BIGDATETIME_TYPE)
+  case CS_BIGDATETIME_TYPE:
 #endif
   case CS_DATETIME_TYPE:
   case CS_DATETIME4_TYPE:
-#if defined(CS_BIGDATE_TYPE)
-  case CS_BIGDATE_TYPE:
-#endif
-    return 9;
-#if defined(CS_TIME_TYPE)
-  case CS_TIME_TYPE:
+    return SQL_DATETIME;
 #if defined(CS_BIGTIME_TYPE)
   case CS_BIGTIME_TYPE:
 #endif
-    return 10;
+#if defined(CS_TIME_TYPE)
+  case CS_TIME_TYPE:
+    return SQL_TIME;
 #endif
   case CS_MONEY_TYPE:
   case CS_MONEY4_TYPE:
-    return 3;
-  case CS_NUMERIC_TYPE:
-    return 2;
   case CS_DECIMAL_TYPE:
-    return 3;
+    return SQL_DECIMAL;
+  case CS_NUMERIC_TYPE:
+    return SQL_NUMERIC;
   case CS_VARCHAR_TYPE:
-    return 12;
+    return SQL_VARCHAR;
   case CS_VARBINARY_TYPE:
-    return -3;
+    return SQL_VARBINARY;
     /*    case CS_TIMESTAMP_TYPE:     return -3;  */
 
   default:
