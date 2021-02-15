@@ -25,9 +25,8 @@
 
   $hostname  = Sys::Hostname::hostname();
   $init_done = 0;
-  $VERSION   = '1.16';
-  my $Revision = substr( q$Revision: 1.119 $, 10 );
-
+  $VERSION   = '1.17';
+  
   require_version DBI 1.30;
 
   # dl_open() calls need to use the RTLD_GLOBAL flag if
