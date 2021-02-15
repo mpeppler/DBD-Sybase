@@ -40,6 +40,8 @@ If you are stuck please start by searching the Web, the appropriate
 mailing lists, etc, as it is likely that someone else
 will have experienced the same problem before you.
 
+You can report issues at https://github.com/mpeppler/DBD-Sybase/issues
+
 For recent changes please see the CHANGES file.
 
 Building:
