@@ -25,9 +25,8 @@
 
   $hostname  = Sys::Hostname::hostname();
   $init_done = 0;
-  $VERSION   = '1.16';
-  my $Revision = substr( q$Revision: 1.119 $, 10 );
-
+  $VERSION   = '1.17';
+  
   require_version DBI 1.30;
 
   # dl_open() calls need to use the RTLD_GLOBAL flag if
@@ -1999,7 +1998,7 @@ Manual for more information on the set command and on the arithabort option.
 =item $bool = $dbh->syb_isdead
 
 Tests the connection to see if the connection has been marked DEAD by OpenClient.
-The connection can get marked DEAD if an error occurs on the connection, or the connection fails.
+The connection can get marked DEAD if an error occurs on the connection, or the connection fails.
 
 =back
 
