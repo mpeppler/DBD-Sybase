@@ -28,13 +28,13 @@ print "Switch: $switch->{'Attribution'}, $switch->{'Version'}\n";
 
 print "Available Drivers: ",join(", ",DBI->available_drivers()),"\n";
 
-my $dbh = DBI->connect("dbi:Sybase:server=$Srv;database=$Db", $Uid, $Pwd, {PrintError => 0});
+my $dbh = DBI->connect("dbi:Sybase:$Srv;database=$Db", $Uid, $Pwd, {PrintError => 0});
 
 ok(defined($dbh), 'Connect');
 if(!$dbh) {
     warn "No connection - did you set the user, password and server name correctly in PWD?\n";
     for (4 .. 33) {
-	ok(0);
+      ok(0);
     }
     exit(0);
 }

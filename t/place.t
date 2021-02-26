@@ -15,7 +15,7 @@ BEGIN { use_ok('DBI');
 
 my ($Uid, $Pwd, $Srv, $Db) = _test::get_info();
 
-my $dbh = DBI->connect("dbi:Sybase:server=$Srv;database=$Db", $Uid, $Pwd, {PrintError => 1});
+my $dbh = DBI->connect("dbi:Sybase:$Srv;database=$Db", $Uid, $Pwd, {PrintError => 1});
 
 plan skip_all => "No connection - did you set the user, password and server name correctly in PWD?\n"
     unless $dbh;

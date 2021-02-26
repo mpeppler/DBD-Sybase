@@ -26,7 +26,7 @@ use vars qw($Pwd $Uid $Srv $Db);
 ($Uid, $Pwd, $Srv, $Db) = _test::get_info();
 
 #DBI->trace(3);
-my $dbh = DBI->connect("dbi:Sybase:server=$Srv;database=$Db", $Uid, $Pwd, {PrintError=>1});
+my $dbh = DBI->connect("dbi:Sybase:$Srv;database=$Db", $Uid, $Pwd, {PrintError=>1});
 #exit;
 ok(defined($dbh), 'Connect');
 
