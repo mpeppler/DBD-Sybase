@@ -28,7 +28,7 @@ use vars qw($Pwd $Uid $Srv $Db);
 ( $Uid, $Pwd, $Srv, $Db ) = _test::get_info();
 
 my $dbh = DBI->connect(
-    "dbi:Sybase:server=$Srv;database=$Db;charset=utf8", $Uid, $Pwd,
+    "dbi:Sybase:$Srv;database=$Db;charset=utf8", $Uid, $Pwd,
     { PrintError => 1 }
 );
 $dbh->{syb_enable_utf8} = 1;
@@ -132,7 +132,7 @@ $dbh->{syb_enable_utf8} = 0;
 
 {
     my $dbh2 = DBI->connect(
-        "dbi:Sybase:server=$Srv;database=$Db;charset=utf8",
+        "dbi:Sybase:$Srv;database=$Db;charset=utf8",
         $Uid, $Pwd, {
             PrintError      => 1,
             syb_enable_utf8 => 1
