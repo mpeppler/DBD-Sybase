@@ -640,10 +640,10 @@ static CS_INT get_cwidth(CS_DATAFMT *column) {
   case CS_BINARY_TYPE:
   case CS_VARBINARY_TYPE:
   case CS_LONGBINARY_TYPE:
-//#if defined(CS_UNICHAR_TYPE)
-//	case CS_UNICHAR_TYPE:
-//	case CS_UNITEXT_TYPE:
-//#endif
+#if defined(CS_UNICHAR_TYPE)
+	case CS_UNICHAR_TYPE:
+	case CS_UNITEXT_TYPE:
+#endif
     len = (2 * column->maxlength) + 2;
     break;
 
