@@ -237,9 +237,9 @@
                , TABLE_NAME      = o.name
                , TABLE_TYPE      =
                    case o.type
-                       when "U" then "TABLE"
-                       when "V" then "VIEW"
-                       when "S" then "SYSTEM TABLE"
+                       when 'U' then 'TABLE'
+                       when 'V' then 'VIEW'
+                       when 'S' then 'SYSTEM TABLE'
                    end
                , REMARKS         = NULL
             from sysobjects o
