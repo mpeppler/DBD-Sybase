@@ -695,14 +695,18 @@ static CS_INT get_cwidth(CS_DATAFMT *column) {
     len = 40;
     break;
 
-#if 0
+#if 1
 // According to Sebastien Pardo (https://github.com/mpeppler/DBD-Sybase/issues/48) 
-// The following is needed to handle very large CS_NUMERIC values. Needs to be double
-// checked before being enabled as this code was removed between 1.09 and 1.15 and now I
-// can't remember why...
+// The following is needed to handle very large CS_NUMERIC values. 
+// This code was removed between 1.09 and 1.15. I'm re-enabling it as this appears to
+// only affect the binding of numeric data types in row fetches, and column displays in 
+// the error handler, which shouldn't really be an issue.
   case CS_NUMERIC_TYPE:
   case CS_DECIMAL_TYPE:
-    len = (CS_MAX_PREC + 2);
+    // CS_MAX_PREC is 77 (theoretical max precision) - using the precision/scale of the result set
+    // seems more appropriate.
+    //len = (CS_MAX_PREC + 2);
+    len = column->precision + column->scale + 2;
     break;
 #endif
 
