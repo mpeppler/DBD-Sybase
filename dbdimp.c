@@ -47,6 +47,16 @@
 #if !defined(PROC_STATUS)
 #define PROC_STATUS 0
 #endif
+
+/* in versions up to 1.17 we always issue a ROLLBACK TRAN on disconnect
+   With Sybase this is fine as a ROLLBACK with no corresponding BEGIN TRAN
+   is a no-op. But this generates an error message with MS-SQL.
+   So we now skip this, as any active transaction will in any case
+   be rolled back if the conection is closed.
+*/
+#if !defined(ROLLBACK_ON_EXIT)
+#define ROLLBACK_ON_EXIT 0
+#endif
 /*
  * In DBD::Sybase 1.09 and before, certain large numeric types (money, bigint)
  * were being kept in native format, and then returned to the caller as a perl NV
@@ -1685,6 +1695,8 @@ static int extract_version(char *buff, char *ver) {
         strncpy(ver, p, 10);
       }
     }
+  } else if (!strncmp(buff, "Microsoft SQL Server", 20)) {
+    strcpy(ver, "MS-SQL");
   } else {
     strcpy(ver, "Unknown");
   }
@@ -1751,6 +1763,9 @@ static int get_server_version(SV *dbh, imp_dbh_t *imp_dbh, CS_CONNECTION *con) {
         strncpy(imp_dbh->serverVersionString, buff, sizeof(imp_dbh->serverVersionString));
         extract_version(buff, version);
         strncpy(imp_dbh->serverVersion, version, sizeof(imp_dbh->serverVersion));
+        if (!strncmp("MS-SQL", version, 6)) {
+          imp_dbh->isMSSql = 1;
+        }
         if (DBIc_DBISTATE(imp_dbh)->debug >= 3) {
           PerlIO_printf(DBIc_LOGPIO(imp_dbh), "    get_server_version() -> version = %s\n",
               imp_dbh->serverVersion);
@@ -2166,11 +2181,19 @@ int syb_db_disconnect(SV *dbh, imp_dbh_t *imp_dbh) {
 
   /* rollback if we get disconnected and no explicit commit
    has been called (when in non-AutoCommit mode) */
+  /* For Sybase, issuing a ROLLBACK TRAN with no corresponding BEGIN TRAN
+     is a no-op, and has no side effects.
+     However, for MS-SQL this generates a warning message.
+     Given that an ongoing transaction is automatically rolled back if
+     the connection is aborted it would seem that issuing this rollback
+     on the disconnect call is realy unnecessary. */
+#if ROLLBACK_ON_EXIT
   if (imp_dbh->isDead == 0) { /* only call if connection still active */
     if (!DBIc_is(imp_dbh, DBIcf_AutoCommit)) {
       syb_db_rollback(dbh, imp_dbh);
     }
   }
+#endif
 
   if (DBIc_DBISTATE(imp_dbh)->debug >= 3) {
     PerlIO_printf(DBIc_LOGPIO(imp_dbh),
@@ -2219,7 +2242,12 @@ int syb_db_STORE_attrib(SV *dbh, imp_dbh_t *imp_dbh, SV *keysv, SV *valuesv) {
     on = SvTRUE(valuesv);
     if (imp_dbh->chainedSupported) {
       int autocommit = DBIc_is(imp_dbh, DBIcf_AutoCommit);
-      if (!autocommit) {
+      /* if we're connected to an MSSQL instance, then do not attempt to
+         execute a COMMIT TRAN - as that will generate an error message if we
+         are not in a transaction.
+         If the switch is attempted in a transaction then the perl program will
+         have to be modified to add an explicit call to commit instead.*/
+      if (!autocommit && !imp_dbh->isMSSql) {
         syb_db_commit(dbh, imp_dbh);
       }
       if (on) {
@@ -6218,9 +6246,11 @@ static int toggle_autocommit(SV *dbh, imp_dbh_t *imp_dbh, int flag) {
         current ? "on" : "off", flag ? "on" : "off");
   }
   if (flag) {
-    if (!current) {
+    if (!current && !imp_dbh->isMSSql) {
       /* Going from OFF to ON - so force a COMMIT on any open 
-       transaction */
+       transaction. Note  only doing this for Sybase servers as a 
+       bare COMMIT (outside of a transaction) is a no-op for Sybase,
+       but generates an error/warning message for MS-SQL */
       syb_db_commit(dbh, imp_dbh);
     }
     if (!imp_dbh->doRealTran) {

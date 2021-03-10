@@ -103,6 +103,7 @@ struct imp_dbh_st {
 
 	char serverVersion[VERSION_SIZE];
 	char serverVersionString[255];
+  int  isMSSql;
 
 	int isDead;
 
