@@ -3991,6 +3991,16 @@ static int syb_blk_execute(imp_dbh_t *imp_dbh, imp_sth_t *imp_sth, SV *sth) {
 static int cmd_execute(SV *sth, imp_sth_t *imp_sth) {
   D_imp_dbh_from_sth;
 
+  if (imp_sth->statement == NULL) {
+    if (DBIc_DBISTATE(imp_dbh)->debug >= 3) {
+      PerlIO_printf(
+        DBIc_LOGPIO(imp_dbh),
+        "    cmd_execute() -> can't execute a command with a NULL statement string.\n");
+    }
+    syb_set_error(imp_dbh, -1, "execute() called with an invalid SQL string.");
+    return -2;
+  }
+
   if (!imp_sth->dyn_execed) {
     if (!imp_sth->cmd) {
       /* only allocate a CS_COMMAND struct if there isn't one already
