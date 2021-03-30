@@ -5300,12 +5300,13 @@ static int time2str(ColData *colData, CS_DATAFMT *srcfmt, char *buff, CS_INT len
 }
 #endif
 
-static CS_NUMERIC to_numeric(char *str, CS_LOCALE *locale, CS_DATAFMT *datafmt,
-    int type) {
-  CS_NUMERIC mn;
+static int to_numeric(char *str, imp_dbh_t *imp_dbh, CS_DATAFMT *datafmt,
+    int type, CS_NUMERIC *mn) {
+  //CS_NUMERIC mn;
   CS_DATAFMT srcfmt;
   CS_INT reslen;
   char *p;
+  CS_LOCALE *locale = LOCALE(imp_dbh);
 
   memset(&mn, 0, sizeof(mn));
 
@@ -5367,15 +5368,17 @@ static CS_NUMERIC to_numeric(char *str, CS_LOCALE *locale, CS_DATAFMT *datafmt,
     }
   }
 
-  if (cs_convert(context, &srcfmt, str, datafmt, &mn, &reslen) != CS_SUCCEED) {
-    warn("cs_convert failed (to_numeric(%s))", str);
+  if ((cs_convert(context, &srcfmt, str, datafmt, mn, &reslen) != CS_SUCCEED) || (reslen == CS_UNUSED)) {
+    if (DBIc_DBISTATE(imp_dbh)->debug >= 3) {
+      PerlIO_printf(DBIc_LOGPIO(imp_dbh), "       cs_convert failed (to_numeric(%s), type=%d, scale=%d, precision=%d, maxlen=%d)\n", 
+        str, datafmt->datatype, datafmt->scale, datafmt->precision, datafmt->maxlength);
+    //warn("cs_convert failed (to_numeric(%s))", str);
+    }
+    return 0;
   }
 
-  if (reslen == CS_UNUSED) {
-    warn("conversion failed: to_numeric(%s)", str);
-  }
 
-  return mn;
+  return 1;
 }
 
 static CS_MONEY to_money(char *str, CS_LOCALE *locale) {
@@ -5536,8 +5539,14 @@ static int _dbd_rebind_ph(SV *sth, imp_sth_t *imp_sth, phs_t *phs, int maxlen) {
 #endif
     case CS_NUMERIC_TYPE:
     case CS_DECIMAL_TYPE:
-      n_value = to_numeric(phs->sv_buf, LOCALE(imp_dbh), &phs->datafmt,
-          imp_sth->type);
+      rc = to_numeric(phs->sv_buf, imp_dbh, &phs->datafmt,
+          imp_sth->type, &n_value);
+      if(!rc) {
+        char errbuf[64];
+        sprintf(errbuf, "to_numeric() failed for '%s'", phs->sv_buf);
+        syb_set_error(imp_dbh, -1, errbuf);
+        return 0;
+      }
       phs->datafmt.datatype = CS_NUMERIC_TYPE;
       value = &n_value;
       value_len = sizeof(n_value);
