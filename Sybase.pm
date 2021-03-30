@@ -1144,6 +1144,8 @@ results remaining for the current command by actually fetching them.
 The default behaviour is to issue a ct_cancel(CS_CANCEL_ALL), but this
 I<appears> to cause connections to hang or to fail in certain cases
 (although I've never witnessed this myself.)
+I would recommend leaving this set to the default value unless this really
+causes issues.
 
 =item syb_dynamic_supported (bool)
 
