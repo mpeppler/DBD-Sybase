@@ -218,3 +218,6 @@ struct imp_sth_st {
 };
 #define IMP_STH_EXECUTING	0x0001
 
+int syb_ping(SV *dbh, imp_dbh_t *imp_dbh);
+int syb_st_cancel(SV *sth, imp_sth_t *imp_sth);
+
