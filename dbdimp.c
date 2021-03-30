@@ -4568,9 +4568,16 @@ int syb_st_finish(SV *sth, imp_sth_t *imp_sth) {
       PerlIO_printf(DBIc_LOGPIO(imp_dbh),
           "    syb_st_finish() -> flushing\n");
     }
-    DBIh_CLEAR_ERROR(imp_sth); /* so syb_st_fetch can tell us when something goes wrong */
-    while (DBIc_ACTIVE(imp_sth) && !imp_dbh->isDead && imp_sth->exec_done
-        && !SvTRUE(DBIc_ERR(imp_sth))) {
+    /*
+    The clear-error below actually causes any existing errors that may have been recorded
+    to be "forgotten".
+    In addition, stopping on any error (which could be a simple raiserror call rather than any actual
+    error) will potentially leave results pending on the connection.
+    So I have now removed the clear error and the check on any existing issues on the connection.
+    In my testing this appears to work as expected with no bad side-effects.
+    */
+    //DBIh_CLEAR_ERROR(imp_sth); /* so syb_st_fetch can tell us when something goes wrong */
+    while (DBIc_ACTIVE(imp_sth) && !imp_dbh->isDead && imp_sth->exec_done /*&& !SvTRUE(DBIc_ERR(imp_sth))*/ ) {
       AV *retval;
       do {
         retval = syb_st_fetch(sth, imp_sth);
