@@ -5315,7 +5315,7 @@ static int to_numeric(char *str, imp_dbh_t *imp_dbh, CS_DATAFMT *datafmt,
   char *p;
   CS_LOCALE *locale = LOCALE(imp_dbh);
 
-  memset(&mn, 0, sizeof(mn));
+  memset(mn, 0, sizeof(*mn));
 
   if (!str || !*str) {
     str = "0";
