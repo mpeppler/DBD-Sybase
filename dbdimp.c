@@ -3691,7 +3691,7 @@ static CS_RETCODE get_cs_msg(CS_CONTEXT *context, CS_CONNECTION *connection,
   ret = cs_diag(context, CS_GET, CS_CLIENTMSG_TYPE, lastmsg, &errmsg);
   if (DBIc_DBISTATE(imp_sth)->debug >= 4) {
     PerlIO_printf(DBIc_LOGPIO(imp_sth),
-        "get_cs_msg -> cs_diag(CS_GET) ret = %d\n", ret);
+        "get_cs_msg -> cs_diag(CS_GET) ret = %d, errmsg=%s\n", ret, errmsg.msgstring);
   }
   if (ret != CS_SUCCEED) {
     warn("cs_diag(CS_GET) failed");
@@ -5307,15 +5307,17 @@ static int time2str(ColData *colData, CS_DATAFMT *srcfmt, char *buff, CS_INT len
 }
 #endif
 
-static int to_numeric(char *str, imp_dbh_t *imp_dbh, CS_DATAFMT *datafmt,
+static int to_numeric(char *str, SV *sth, imp_sth_t *imp_sth, CS_DATAFMT *datafmt,
     int type, CS_NUMERIC *mn) {
   //CS_NUMERIC mn;
+  D_imp_dbh_from_sth;
+
   CS_DATAFMT srcfmt;
   CS_INT reslen;
   char *p;
   CS_LOCALE *locale = LOCALE(imp_dbh);
 
-  memset(&mn, 0, sizeof(mn));
+  memset(mn, 0, sizeof(*mn));
 
   if (!str || !*str) {
     str = "0";
@@ -5323,7 +5325,6 @@ static int to_numeric(char *str, imp_dbh_t *imp_dbh, CS_DATAFMT *datafmt,
 
   memset(&srcfmt, 0, sizeof(srcfmt));
   srcfmt.datatype = CS_CHAR_TYPE;
-  srcfmt.maxlength = strlen(str);
   srcfmt.format = CS_FMT_NULLTERM;
   srcfmt.locale = locale;
 
@@ -5375,7 +5376,16 @@ static int to_numeric(char *str, imp_dbh_t *imp_dbh, CS_DATAFMT *datafmt,
     }
   }
 
+// ensure that the max length value for the source is adjusted to any changes that may have been
+// done above. This is needed because FreeTDS is very picky and doesn't honor the CS_FMT_NULLTERM
+// setting correctly in this situation.
+  srcfmt.maxlength = strlen(str);
+
   if ((cs_convert(context, &srcfmt, str, datafmt, mn, &reslen) != CS_SUCCEED) || (reslen == CS_UNUSED)) {
+    char msg[64];
+    sprintf(msg, "cs_convert failed: to_numeric(%s)\n", str);
+    get_cs_msg(context, imp_dbh->connection, msg, sth, imp_sth);
+          
     if (DBIc_DBISTATE(imp_dbh)->debug >= 3) {
       PerlIO_printf(DBIc_LOGPIO(imp_dbh), "       cs_convert failed (to_numeric(%s), type=%d, scale=%d, precision=%d, maxlen=%d)\n", 
         str, datafmt->datatype, datafmt->scale, datafmt->precision, datafmt->maxlength);
@@ -5476,6 +5486,9 @@ static int _dbd_rebind_ph(SV *sth, imp_sth_t *imp_sth, phs_t *phs, int maxlen) {
   CS_INT datatype;
   int free_value = 0;
 
+  /* determine the value, and length that we wish to pass to ct_param() */
+  datatype = phs->datafmt.datatype;
+
   if (DBIc_DBISTATE(imp_dbh)->debug >= 3) {
     char *text = neatsvpv(phs->sv, 0);
     PerlIO_printf(DBIc_LOGPIO(imp_dbh), "       bind %s (%s) <== %s (",
@@ -5486,40 +5499,17 @@ static int _dbd_rebind_ph(SV *sth, imp_sth_t *imp_sth, phs_t *phs, int maxlen) {
     } else {
       PerlIO_printf(DBIc_LOGPIO(imp_dbh), "NULL, ");
     }
-    PerlIO_printf(DBIc_LOGPIO(imp_dbh), "ptype %d, otype %d%s)\n",
-        (int) SvTYPE(phs->sv), phs->ftype, (phs->is_inout) ? ", inout"
-            : "");
+    PerlIO_printf(DBIc_LOGPIO(imp_dbh), "ptype %d, otype %d, datatype %d)\n",
+        (int) SvTYPE(phs->sv), phs->ftype, datatype);
   }
 
-  /* At the moment we always do sv_setsv() and rebind.        */
-  /* Later we may optimise this so that more often we can     */
-  /* just copy the value & length over and not rebind.        */
-#if 0 
-  if (phs->is_inout) { /* XXX */
-    if (SvREADONLY(phs->sv))
-    croak(no_modify);
-    /* phs->sv _is_ the real live variable, it may 'mutate' later   */
-    /* pre-upgrade high to reduce risk of SvPVX realloc/move        */
-    (void)SvUPGRADE(phs->sv, SVt_PVNV);
-    /* ensure room for result, 28 is magic number (see sv_2pv)      */
-    SvGROW(phs->sv, (phs->maxlen < 28) ? 28 : phs->maxlen+1);
-  }
-  else {
-    /* phs->sv is copy of real variable, upgrade to at least string */
-    (void)SvUPGRADE(phs->sv, SVt_PV);
-  }
-#else
   /* phs->sv is copy of real variable, upgrade to at least string */
   (void) SvUPGRADE(phs->sv, SVt_PV);
-#endif
 
   /* At this point phs->sv must be at least a PV with a valid buffer, */
   /* even if it's undef (null)                                        */
   /* Here we set phs->sv_buf, and value_len.                */
 
-  /* determine the value, and length that we wish to pass to
-   ct_param() */
-  datatype = phs->datafmt.datatype;
 
   if (SvOK(phs->sv)) {
     phs->sv_buf = SvPV(phs->sv, value_len);
@@ -5546,7 +5536,7 @@ static int _dbd_rebind_ph(SV *sth, imp_sth_t *imp_sth, phs_t *phs, int maxlen) {
 #endif
     case CS_NUMERIC_TYPE:
     case CS_DECIMAL_TYPE:
-      rc = to_numeric(phs->sv_buf, imp_dbh, &phs->datafmt,
+      rc = to_numeric(phs->sv_buf, sth, imp_sth, &phs->datafmt,
           imp_sth->type, &n_value);
       if(!rc) {
         char errbuf[64];
