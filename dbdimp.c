@@ -5325,7 +5325,6 @@ static int to_numeric(char *str, SV *sth, imp_sth_t *imp_sth, CS_DATAFMT *datafm
 
   memset(&srcfmt, 0, sizeof(srcfmt));
   srcfmt.datatype = CS_CHAR_TYPE;
-  srcfmt.maxlength = strlen(str);
   srcfmt.format = CS_FMT_NULLTERM;
   srcfmt.locale = locale;
 
@@ -5376,6 +5375,11 @@ static int to_numeric(char *str, SV *sth, imp_sth_t *imp_sth, CS_DATAFMT *datafm
       }
     }
   }
+
+// ensure that the max length value for the source is adjusted to any changes that may have been
+// done above. This is needed because FreeTDS is very picky and doesn't honor the CS_FMT_NULLTERM
+// setting correctly in this situation.
+  srcfmt.maxlength = strlen(str);
 
   if ((cs_convert(context, &srcfmt, str, datafmt, mn, &reslen) != CS_SUCCEED) || (reslen == CS_UNUSED)) {
     char msg[64];
