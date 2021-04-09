@@ -202,11 +202,16 @@ SKIP: {
     skip 'requires ASE 15 ', 2 if $dbh->{syb_server_version} lt '15' || $dbh->{syb_server_version} eq 'Unknown' || $dbh->{syb_server_version} eq 'MS-SQL';
     $dbh->{PrintError} = 1;
     my $sth = $dbh->prepare("select convert(unsigned smallint, power(2, 15)), convert(bigint, power(convert(bigint, 2), 32))");
-    $sth->execute;
-    while(my $r = $sth->fetch) {
-	    print "@$r\n";
-	    ok($r->[0] == 32768, "unsigned smallint");
-	    ok($r->[1] == 4294967296, "bigint");
+    my $rc = $sth->execute;
+    if ($rc) {
+      while(my $r = $sth->fetch) {
+        print "@$r\n";
+        ok($r->[0] == 32768, "unsigned smallint");
+        ok($r->[1] == 4294967296, "bigint");
+      }
+    } else {
+      ok(0 == 1, "unsigned smalling");
+      ok(0 == 1, "bigint");
     }
 }
 

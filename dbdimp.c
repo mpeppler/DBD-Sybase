@@ -3484,6 +3484,17 @@ static CS_RETCODE describe(SV* sth, imp_sth_t* imp_sth, int restype) {
 GoodBye:;
   if(retcode == CS_SUCCEED) {
     imp_sth->done_desc = 1;
+  } else {
+    // If we haven't been able to describe this result set correctly, then we won't be able to fetch it
+    // So we probably need to cancel the request:
+    if(DBIc_DBISTATE(imp_dbh)->debug >= 3) {
+      PerlIO_printf(DBIc_LOGPIO(imp_dbh), "    describe() retcode is NOT CS_SUCCEED - canceling the request.\n");
+    }
+    // disable flushFinish if it is set:
+    int flushFinish = imp_dbh->flushFinish;
+    imp_dbh->flushFinish = 0;
+    syb_st_finish(sth, imp_sth);
+    imp_dbh->flushFinish = flushFinish;
   }
   return retcode == CS_SUCCEED;
 }
