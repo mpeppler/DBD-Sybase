@@ -21,7 +21,9 @@ $written_pwd_file = 'PWD';
 
 # regexp to find libct/libsybct, and avoid picking up libct_cu which isn't anything we want at all...
 # https://github.com/mpeppler/DBD-Sybase/issues/64
-my $libct_re = qr/\blib(syb)?ct(64)?\./i;
+#my $libct_re = qr/\blib(syb)?ct(64)?\./i;
+# This change is to handle freetds on Ubuntu, see https://github.com/mpeppler/DBD-Sybase/issues/22
+my $libct_re = qr/\blib(syb|x86)?(ct|_)?(64)?\.*/i;
 
 #$libdir           = 'lib';
 
