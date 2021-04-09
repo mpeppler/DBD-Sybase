@@ -104,7 +104,7 @@
 #endif
 DBISTATE_DECLARE;
 
-static void cleanUp _((imp_sth_t *));
+static void cleanUp _((imp_dbh_t *, imp_sth_t *));
 static char *GetAggOp _((CS_INT));
 static CS_INT get_cwidth _((CS_DATAFMT *));
 static CS_INT display_dlen _((CS_DATAFMT *));
@@ -143,6 +143,9 @@ static int get_server_version(SV *dbh, imp_dbh_t *imp_dbh, CS_CONNECTION *con);
 static void clear_cache(SV *sth, imp_sth_t *imp_sth);
 
 static int _dbd_rebind_ph(SV *sth, imp_sth_t *imp_sth, phs_t *phs, int maxlen);
+
+static CS_RETCODE get_cs_msg(CS_CONTEXT *context, char *msg, SV *sth, imp_sth_t *imp_sth);
+
 
 static CS_INT BLK_VERSION;
 
@@ -3164,22 +3167,41 @@ int syb_st_rows(SV *sth, imp_sth_t *imp_sth) {
   return imp_sth->numRows;
 }
 
-static void cleanUp(imp_sth_t *imp_sth) {
+static void cleanUp(imp_dbh_t *imp_dbh, imp_sth_t *imp_sth) {
   int i;
   int numCols = DBIc_NUM_FIELDS(imp_sth);
-  for (i = 0; i < numCols; ++i) {
+  // coldata could be null here if cleanUp() has already been called due to a
+  // processing error in the describe() function.
+  for (i = 0; i < numCols && imp_sth->coldata != NULL; ++i) {
+    if (DBIc_DBISTATE(imp_dbh)->debug >= 4) {
+      PerlIO_printf(DBIc_LOGPIO(imp_dbh),
+          "    cleanUp() -> processing column %d\n", i);
+    }
+
     if (imp_sth->coldata[i].type == CS_CHAR_TYPE
         || imp_sth->coldata[i].type == CS_LONGCHAR_TYPE
         || imp_sth->coldata[i].type == CS_TEXT_TYPE
         || imp_sth->coldata[i].type == CS_IMAGE_TYPE) {
+      if (DBIc_DBISTATE(imp_dbh)->debug >= 4) {
+        PerlIO_printf(DBIc_LOGPIO(imp_dbh),
+            "    cleanUp() -> Safefree for %d, type %d\n", i, imp_sth->coldata[i].type);
+      }
       Safefree(imp_sth->coldata[i].value.c);
     }
   }
 
   if (imp_sth->datafmt) {
+    if (DBIc_DBISTATE(imp_dbh)->debug >= 4) {
+      PerlIO_printf(DBIc_LOGPIO(imp_dbh),
+          "    cleanUp() -> Safefree(datafmt)\n");
+    }
     Safefree(imp_sth->datafmt);
   }
   if (imp_sth->coldata) {
+    if (DBIc_DBISTATE(imp_dbh)->debug >= 4) {
+      PerlIO_printf(DBIc_LOGPIO(imp_dbh),
+          "    cleanUp() -> Safefree(coldata)\n");
+    }
     Safefree(imp_sth->coldata);
   }
   imp_sth->numCols = 0;
@@ -3232,8 +3254,8 @@ static CS_RETCODE describe(SV* sth, imp_sth_t* imp_sth, int restype) {
 
   imp_sth->numCols = numCols;
 
-  New(902, imp_sth->coldata, numCols, ColData);
-  New(902, imp_sth->datafmt, numCols, CS_DATAFMT);
+  Newz(902, imp_sth->coldata, numCols, ColData);
+  Newz(902, imp_sth->datafmt, numCols, CS_DATAFMT);
 
   /* this routine may be called without the connection reference */
   if(restype == CS_COMPUTE_RESULT) {
@@ -3248,7 +3270,7 @@ static CS_RETCODE describe(SV* sth, imp_sth_t* imp_sth, int restype) {
   for(i = 0; i < numCols; ++i) {
     if((retcode = ct_describe(imp_sth->cmd, (i + 1), &imp_sth->datafmt[i])) != CS_SUCCEED) {
       warn("ct_describe() failed");
-      cleanUp(imp_sth);
+      cleanUp(imp_dbh, imp_sth);
       goto GoodBye;
     }
     /* Make sure we have at least some sort of column name: */
@@ -3451,7 +3473,7 @@ static CS_RETCODE describe(SV* sth, imp_sth_t* imp_sth, int restype) {
      switch above: */
     if(retcode != CS_SUCCEED) {
       warn("ct_bind() failed");
-      cleanUp(imp_sth);
+      cleanUp(imp_dbh, imp_sth);
       break;
     }
     if(DBIc_DBISTATE(imp_dbh)->debug >= 3) {
@@ -3516,7 +3538,7 @@ static int st_next_result(SV *sth, imp_sth_t *imp_sth) {
     case CS_CURSOR_RESULT:
     case CS_COMPUTE_RESULT:
       if (imp_sth->done_desc) {
-        cleanUp(imp_sth);
+        cleanUp(imp_dbh, imp_sth);
         clear_cache(sth, imp_sth);
       }
       retcode = describe(sth, imp_sth, restype);
@@ -3670,8 +3692,7 @@ static int _convert(void *ptr, char *str, CS_LOCALE *locale,
   return retcode;
 }
 
-static CS_RETCODE get_cs_msg(CS_CONTEXT *context, CS_CONNECTION *connection,
-    char *msg, SV *sth, imp_sth_t *imp_sth) {
+static CS_RETCODE get_cs_msg(CS_CONTEXT *context, char *msg, SV *sth, imp_sth_t *imp_sth) {
   dTHX;
   CS_CLIENTMSG errmsg;
   CS_INT lastmsg = 0;
@@ -3945,7 +3966,7 @@ static int syb_blk_execute(imp_dbh_t *imp_dbh, imp_sth_t *imp_sth, SV *sth) {
               "cs_convert failed: column %d: (_convert(%s, %d))",
               i + 1, (char *) imp_sth->coldata[i].ptr,
               phs->datafmt.datatype);
-          ret = get_cs_msg(context, con, msg, sth, imp_sth);
+          ret = get_cs_msg(context, msg, sth, imp_sth);
           if (ret == CS_FAIL) {
             goto FAIL;
           }
@@ -4706,7 +4727,7 @@ void syb_st_destroy(SV *sth, imp_sth_t *imp_sth) {
     imp_dbh->sql = NULL;
   }
 
-  cleanUp(imp_sth);
+  cleanUp(imp_dbh, imp_sth);
 
   if (imp_sth->cmd) {
     /* Gene Ressler says that this call can fail because we've already 
@@ -5384,7 +5405,7 @@ static int to_numeric(char *str, SV *sth, imp_sth_t *imp_sth, CS_DATAFMT *datafm
   if ((cs_convert(context, &srcfmt, str, datafmt, mn, &reslen) != CS_SUCCEED) || (reslen == CS_UNUSED)) {
     char msg[64];
     sprintf(msg, "cs_convert failed: to_numeric(%s)\n", str);
-    get_cs_msg(context, imp_dbh->connection, msg, sth, imp_sth);
+    get_cs_msg(context, msg, sth, imp_sth);
           
     if (DBIc_DBISTATE(imp_dbh)->debug >= 3) {
       PerlIO_printf(DBIc_LOGPIO(imp_dbh), "       cs_convert failed (to_numeric(%s), type=%d, scale=%d, precision=%d, maxlen=%d)\n", 
