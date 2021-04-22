@@ -4263,6 +4263,8 @@ static void clear_cache(SV *sth, imp_sth_t *imp_sth) {
   /* Clear cached statement handle attributes, if necessary */
 
   hv_delete((HV*) SvRV(sth), "NAME", 4, G_DISCARD);
+  hv_delete((HV*) SvRV(sth), "NAME_lc", 7, G_DISCARD);
+  hv_delete((HV*) SvRV(sth), "NAME_uc", 7, G_DISCARD);
   hv_delete((HV*) SvRV(sth), "NULLABLE", 8, G_DISCARD);
   hv_delete((HV*) SvRV(sth), "NUM_OF_FIELDS", 13, G_DISCARD);
   hv_delete((HV*) SvRV(sth), "PRECISION", 9, G_DISCARD);
@@ -4973,6 +4975,12 @@ int syb_ct_data_info(SV *sth, imp_sth_t *imp_sth, int action, int column,
   ret = ct_data_info(cmd, action, column, &imp_dbh->iodesc);
 
   if (action == CS_GET) {
+    if (DBIc_DBISTATE(imp_dbh)->debug >= 4) {
+          PerlIO_printf(DBIc_LOGPIO(imp_dbh),
+        "    ct_data_info(): ret = %d, total_txtlen = %d, textptr=%x, timestamp=%x, datatype=%d\n", ret, imp_dbh->iodesc.total_txtlen, 
+        imp_dbh->iodesc.textptr, imp_dbh->iodesc.timestamp, imp_dbh->iodesc.datatype);
+    }
+
     if (imp_dbh->iodesc.textptrlen == 0) {
       DBIh_SET_ERR_CHAR(sth, (imp_xxh_t*)imp_sth, Nullch, 0, "ct_data_info(): text pointer is not set or is undefined. The text/image column may be uninitialized in the database for this row.", Nullch, Nullch);
 
