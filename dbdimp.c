@@ -4265,6 +4265,10 @@ static void clear_cache(SV *sth, imp_sth_t *imp_sth) {
   hv_delete((HV*) SvRV(sth), "NAME", 4, G_DISCARD);
   hv_delete((HV*) SvRV(sth), "NAME_lc", 7, G_DISCARD);
   hv_delete((HV*) SvRV(sth), "NAME_uc", 7, G_DISCARD);
+  hv_delete((HV*) SvRV(sth), "NAME_hash", 9, G_DISCARD);
+  hv_delete((HV*) SvRV(sth), "NAME_hash_lc", 12, G_DISCARD);
+  hv_delete((HV*) SvRV(sth), "NAME_hash_uc", 12, G_DISCARD);
+    
   hv_delete((HV*) SvRV(sth), "NULLABLE", 8, G_DISCARD);
   hv_delete((HV*) SvRV(sth), "NUM_OF_FIELDS", 13, G_DISCARD);
   hv_delete((HV*) SvRV(sth), "PRECISION", 9, G_DISCARD);
