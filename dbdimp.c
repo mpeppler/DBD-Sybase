@@ -2172,7 +2172,7 @@ int syb_db_disconnect(SV *dbh, imp_dbh_t *imp_dbh) {
   /* If we are called in a process that is different from the one where the handle
    * was created then we do NOT disconnect.
    */
-  if (imp_dbh->disconnectInChild = 0 && imp_dbh->pid != getpid()) {
+  if (imp_dbh->disconnectInChild == 0 && imp_dbh->pid != getpid()) {
     if (DBIc_DBISTATE(imp_dbh)->debug >= 3) {
       PerlIO_printf(
           DBIc_LOGPIO(imp_dbh),
@@ -2746,17 +2746,17 @@ static void dbd_preparse(imp_sth_t *imp_sth, char *statement) {
   int state = DEFAULT;
   int next_state;
   char last_literal = 0;
-  char *src, *start, *dest;
+  char *src;
   phs_t phs_tpl;
   SV *phs_sv;
   int idx = 0;
   STRLEN namelen;
+  char name[64];
 #define VARNAME_LEN 255
   char varname[VARNAME_LEN + 1];
   int pos;
 
-  /* allocate room for copy of statement with spare capacity	*/
-  imp_sth->statement = (char*) safemalloc(strlen(statement) * 3);
+  imp_sth->statement = strdup(statement);
 
   /* initialise phs ready to be cloned per placeholder	*/
   memset(&phs_tpl, 0, sizeof(phs_tpl));
@@ -2781,7 +2781,6 @@ static void dbd_preparse(imp_sth_t *imp_sth, char *statement) {
   }
 
   src = statement;
-  dest = imp_sth->statement;
   while (*src) {
     next_state = state; /* default situation */
     switch (state) {
@@ -2825,28 +2824,24 @@ static void dbd_preparse(imp_sth_t *imp_sth, char *statement) {
     /*	printf("state = %d, *src = %c, next_state = %d\n", state, *src, next_state); */
 
     if (state != DEFAULT || *src != '?') {
-      *dest++ = *src++;
+      ++src;
       state = next_state;
       continue;
     }
     state = next_state;
-    start = dest; /* save name inc colon	*/
-    *dest++ = *src++;
-    if (*start == '?') { /* X/Open standard	*/
-      sprintf(start, ":p%d", ++idx); /* '?' -> ':p1' (etc)	*/
-      dest = start + strlen(start);
-    } else { /* not a placeholder, so just copy */
+    if (*src != '?') {
       continue;
     }
-    *dest = '\0'; /* handy for debugging	*/
-    namelen = (dest - start);
+    ++src;
+    sprintf(name, ":p%d", ++idx); /* '?' -> ':p1' (etc)	*/
+    namelen = strlen(name);
     if (imp_sth->all_params_hv == NULL) {
       imp_sth->all_params_hv = newHV();
     }
     phs_tpl.sv = &PL_sv_undef;
     phs_sv = newSVpv((char*) &phs_tpl, sizeof(phs_tpl) + namelen + 1);
-    hv_store(imp_sth->all_params_hv, start, namelen, phs_sv, 0);
-    strcpy(((phs_t*) (void*) SvPVX(phs_sv))->name, start);
+    hv_store(imp_sth->all_params_hv, name, namelen, phs_sv, 0);
+    strcpy(((phs_t*) (void*) SvPVX(phs_sv))->name, name);
     strcpy(((phs_t*) (void*) SvPVX(phs_sv))->varname, varname);
     if (imp_sth->type == 1) { /* if it's an EXEC call, check for OUTPUT */
       char *p = src;
@@ -2873,7 +2868,7 @@ static void dbd_preparse(imp_sth_t *imp_sth, char *statement) {
           ((phs_t*) (void*) SvPVX(phs_sv))->varname);
     }
   }
-  *dest = '\0';
+  
   if (imp_sth->all_params_hv) {
     DBIc_NUM_PARAMS(imp_sth) = (int) HvKEYS(imp_sth->all_params_hv);
     if (DBIc_DBISTATE(imp_sth)->debug >= 3) {
