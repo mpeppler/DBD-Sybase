@@ -120,7 +120,7 @@ static int map_syb_types _((int));
 static int map_sql_types _((int));
 static CS_CONNECTION *syb_db_connect _((struct imp_dbh_st *));
 static int syb_db_use _((imp_dbh_t *, CS_CONNECTION *));
-static int syb_st_describe_proc _((imp_sth_t *, char *));
+static int syb_st_describe_proc _((SV *sth, imp_sth_t *, char *));
 static void syb_set_error(imp_dbh_t *, int, char *);
 static char *my_strdup _((char *));
 static void fetchKerbTicket(imp_dbh_t *imp_dbh);
@@ -2756,7 +2756,7 @@ static void dbd_preparse(imp_sth_t *imp_sth, char *statement) {
   char varname[VARNAME_LEN + 1];
   int pos;
 
-  imp_sth->statement = strdup(statement);
+  imp_sth->statement = my_strdup(statement);
 
   /* initialise phs ready to be cloned per placeholder	*/
   memset(&phs_tpl, 0, sizeof(phs_tpl));
@@ -3075,7 +3075,7 @@ int syb_st_prepare(SV *sth, imp_sth_t *imp_sth, char *statement, SV *attribs) {
       /* RPC call - get the proc name */
       /* We could possibly get the proc params from syscolumns, but
        there are a lot of issues with that which will break it */
-      if (!syb_st_describe_proc(imp_sth, statement)) {
+      if (!syb_st_describe_proc(sth, imp_sth, statement)) {
         croak("DBD::Sybase: describe_proc failed!\n");
       }
       if (DBIc_DBISTATE(imp_dbh)->debug >= 3) {
@@ -3137,23 +3137,91 @@ int syb_st_prepare(SV *sth, imp_sth_t *imp_sth, char *statement, SV *attribs) {
   return 1;
 }
 
-static int syb_st_describe_proc(imp_sth_t *imp_sth, char *statement) {
-  char *buff = my_strdup(statement);
-  char *tok;
+/*
+  Extract the proc name (including database and owner)
+  The identifiers can be quoted with square brackets ([my proc]) or, 
+  if "quoted identifier" is enabled, with double quotes.
+  So we could have
+    database.owner.proc
+    database..proc
+    owner.proc
+    [data base]..proc
+    proc
+    "my proc"
+    [my proc]
+*/
 
-  tok = strtok(buff, " \n\t");
-  if (strncasecmp(tok, "exec", 4)) {
-    Safefree(buff);
+static int syb_st_describe_proc(SV *sth, imp_sth_t *imp_sth, char *statement) {
+  D_imp_dbh_from_sth;
+  enum {DEFAULT, QUOTED} STATES;
+  int state = DEFAULT;
+  int next_state;
+  char quote_char;
+  char *buff = my_strdup(statement);
+  char *src = buff;
+  char *start;
+
+  while (isspace(*src) && *src) {
+    /* skip over leading whitespace */
+    ++src;
+  }
+  if (strncasecmp(src, "exec", 4)) {
     return 0; /* it's gotta start with exec(ute) */
   }
-  tok = strtok(NULL, " \n\t"); /* this is the proc name */
-  if (!tok || !*tok) {
-    warn(
-        "DBD::Sybase: describe_proc: didn't get a proc name in EXEC statement\n");
+  while (!isspace(*src) && *src) {
+    /* could be exec or execute */
+    ++src;
+  }
+
+  while (isspace(*src) && *src) {
+    /* skip over whitespace between exec and proc name */
+    ++src;
+  }
+
+  start = src;
+
+  if (DBIc_DBISTATE(imp_dbh)->debug >= 5) {
+      PerlIO_printf(DBIc_LOGPIO(imp_dbh),
+          "    syb_st_describe_proc parsing: |%s|\n", start);
+  }
+
+  while (*src) {
+    next_state = state; /* default situation */
+    switch (state) {
+    case DEFAULT:
+      if (*src == '[' || *src == '"') {
+        // Determine the closing quote
+        quote_char = (*src == '*' ? *src : ']');
+        next_state = QUOTED;
+      }
+      break;
+    case QUOTED:
+      if (*src == quote_char) {
+        next_state = DEFAULT;
+      }
+      break;
+    }
+    if (state == DEFAULT && isspace(*src)) {
+      *src = '\0';
+      break;
+    }
+    ++src;
+    state = next_state;
+  }
+
+  if (DBIc_DBISTATE(imp_dbh)->debug >= 5) {
+      PerlIO_printf(DBIc_LOGPIO(imp_dbh),
+          "    syb_st_describe_proc after parsing: %s\n", start);
+  }
+
+
+  if (state == QUOTED) {
+    warn("DBD::Sybase - error parsing the proc name in the EXEC statement\n");
     Safefree(buff);
     return 0;
   }
-  strcpy(imp_sth->proc, tok);
+
+  strcpy(imp_sth->proc, start);
   Safefree(buff);
   return 1;
 }
