@@ -5391,7 +5391,7 @@ static int time2str(ColData *colData, CS_DATAFMT *srcfmt, char *buff, CS_INT len
 #endif
     {
       datatype = CS_TIME_TYPE;
-      value = &colData->value.bt;
+      value = &colData->value.t;
     }
 
     cs_dt_crack(context, datatype, value, &rec);
