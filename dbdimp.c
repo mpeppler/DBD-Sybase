@@ -1188,10 +1188,10 @@ int syb_db_login(SV *dbh, imp_dbh_t *imp_dbh, char *dsn, char *uid, char *pwd, S
     imp_dbh->server[63] = 0;
   }
 
-  strncpy(imp_dbh->uid, uid, 32);
-  imp_dbh->uid[31] = 0;
-  strncpy(imp_dbh->pwd, pwd, 32);
-  imp_dbh->pwd[31] = 0;
+  strncpy(imp_dbh->uid, uid, UID_PWD_SIZE);
+  imp_dbh->uid[UID_PWD_SIZE - 1] = 0;
+  strncpy(imp_dbh->pwd, pwd, UID_PWD_SIZE);
+  imp_dbh->pwd[UID_PWD_SIZE - 1] = 0;
 
   sv_setpv(DBIc_ERRSTR(imp_dbh), "");
 
