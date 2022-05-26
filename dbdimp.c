@@ -5422,7 +5422,6 @@ static int to_numeric(char *str, SV *sth, imp_sth_t *imp_sth, CS_DATAFMT *datafm
   CS_DATAFMT srcfmt;
   CS_INT reslen;
   char *p;
-  CS_LOCALE *locale = LOCALE(imp_dbh);
 
   memset(mn, 0, sizeof(*mn));
 
@@ -5433,7 +5432,7 @@ static int to_numeric(char *str, SV *sth, imp_sth_t *imp_sth, CS_DATAFMT *datafm
   memset(&srcfmt, 0, sizeof(srcfmt));
   srcfmt.datatype = CS_CHAR_TYPE;
   srcfmt.format = CS_FMT_NULLTERM;
-  srcfmt.locale = locale;
+  srcfmt.locale = LOCALE(imp_dbh);
 
   /* According to  https://github.com/mpeppler/DBD-Sybase/issues/31 we need to set the 
      datafmt.maxlength value to 35. This is not needed with Sybase client libs, but 
