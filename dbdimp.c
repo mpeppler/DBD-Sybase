@@ -156,12 +156,12 @@ static perl_mutex context_alloc_mutex[1];
 /*#define USE_CSLIB_CB 1 */
 
 static CS_CONTEXT *context;
-static CS_LOCALE *locale;
+static CS_LOCALE *glocale;
 static char scriptName[255];
 static char hostname[255];
 static char *ocVersion;
 
-#define LOCALE(s)	((s)->locale ? (s)->locale : locale)
+#define LOCALE(s)	((s)->locale ? (s)->locale : glocale)
 
 static SV *cslib_cb;
 
@@ -980,11 +980,11 @@ void syb_init(dbistate_t *dbistate) {
         ocVersion);
   }
 
-  if ((retcode = cs_loc_alloc(context, &locale)) != CS_SUCCEED) {
+  if ((retcode = cs_loc_alloc(context, &glocale)) != CS_SUCCEED) {
     warn("cs_loc_alloc failed");
   }
   if (retcode == CS_SUCCEED) {
-    if ((retcode = cs_locale(context, CS_SET, locale, CS_LC_ALL,
+    if ((retcode = cs_locale(context, CS_SET, glocale, CS_LC_ALL,
         (CS_CHAR*) NULL, CS_UNUSED, (CS_INT*) NULL)) != CS_SUCCEED) {
       warn("cs_locale(CS_LC_ALL) failed");
     }
@@ -1002,7 +1002,7 @@ void syb_init(dbistate_t *dbistate) {
 
   if (retcode == CS_SUCCEED) {
     CS_INT type = CS_DATES_SHORT;
-    if ((retcode = cs_dt_info(context, CS_SET, locale, CS_DT_CONVFMT,
+    if ((retcode = cs_dt_info(context, CS_SET, glocale, CS_DT_CONVFMT,
         CS_UNUSED, (CS_VOID*) &type, CS_SIZEOF(CS_INT), NULL))
         != CS_SUCCEED) {
         warn("cs_dt_info() failed");
@@ -1010,7 +1010,7 @@ void syb_init(dbistate_t *dbistate) {
   }
 
   if (retcode == CS_SUCCEED) {
-    if ((retcode = cs_config(context, CS_SET, CS_LOC_PROP, locale,
+    if ((retcode = cs_config(context, CS_SET, CS_LOC_PROP, glocale,
         CS_UNUSED, NULL)) != CS_SUCCEED) {
           // Ignored for now.
       /* warn("cs_config(CS_LOC_PROP) failed"); */
@@ -1235,7 +1235,6 @@ static CS_CONNECTION *syb_db_connect(imp_dbh_t *imp_dbh) {
   dTHR;
   CS_RETCODE retcode;
   CS_CONNECTION *connection = NULL;
-  CS_LOCALE *locale = NULL;
   char ofile[255];
   int len;
 
