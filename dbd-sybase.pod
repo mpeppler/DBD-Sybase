@@ -463,6 +463,20 @@ easiest method is to use the sp_help stored procedure.
 The easiest way to get detailed information about the indexes of a
 table is to use the sp_helpindex (or sp_helpkey) stored procedure.
 
+=head2 prepare_cached
+
+DBD::Sybase maps B<prepare_cached()> to B<prepare()> to avoid possible issues with 
+having a statement handle being kept active outside of the driver's control.
+
+DBD::Sybase (and the underlying TDS protocol) doesn't easily support having more than one active
+SQL statement on a given connection (database handle). Caching a statement handle is only useful if
+it can be reused without reparsing and recompiling it, which is only possible with Sybase if
+you use ?-style placeholders (see below).
+
+In addition, as DBD::Sybase will attempt to emulate the ability to have more than one active
+SQL statement on a database handle by opening addition connections this has significant side
+effects on transaction management. See also the B<syb_no_child_con> attribute, below.
+
 
 =head2 Driver-specific attributes and methods
 
