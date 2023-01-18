@@ -1551,7 +1551,7 @@ it can be reused without reparsing and recompiling it, which is only possible wi
 you use ?-style placeholders (see below).
 
 In addition, as DBD::Sybase will attempt to emulate the ability to have more than one active
-SQL statement on a database handle by opening addition connections this has significant side
+SQL statement on a database handle by opening additional connections this has significant side
 effects on transaction management. See also the B<syb_no_child_con> attribute.
 
 
