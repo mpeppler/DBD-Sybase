@@ -1,5 +1,5 @@
 /*
- Copyright (c) 1997-2011  Michael Peppler
+ Copyright (c) 1997-2023  Michael Peppler
 
  You may distribute under the terms of either the GNU General Public
  License or the Artistic License, as specified in the Perl README file.
@@ -1487,12 +1487,36 @@ static CS_CONNECTION *syb_db_connect(imp_dbh_t *imp_dbh) {
     }
     if (retcode == CS_SUCCEED) {
       if (imp_dbh->encryptPassword[0] != 0) {
-        int i = CS_TRUE;
-        if ((retcode = ct_con_props(connection, CS_SET, CS_SEC_ENCRYPTION,
-                    (CS_VOID*)&i, CS_UNUSED, (CS_INT*)NULL)) != CS_SUCCEED) {
-          warn("ct_con_props(CS_SEC_ENCRYPTION, true) failed");
-          return 0;
+        int level = atoi(imp_dbh->encryptPassword);
+        if (DBIc_DBISTATE(imp_dbh)->debug >= 3) {
+          PerlIO_printf(DBIc_LOGPIO(imp_dbh), "    syb_db_login() -> encryptPassword = %d\n",level);
         }
+        int i = CS_TRUE;
+        if (level == 1) {
+          if ((retcode = ct_con_props(connection, CS_SET, CS_SEC_ENCRYPTION,
+                      (CS_VOID*)&i, CS_UNUSED, (CS_INT*)NULL)) != CS_SUCCEED) {
+            warn("ct_con_props(CS_SEC_ENCRYPTION, true) failed");
+            return 0;
+          }
+        }
+#if defined(CS_SEC_EXTENDED_ENCRYPTION)
+        if (level >= 1) {
+          CS_INT extendedEncryption = CS_TRUE;
+          CS_INT nonEncryptionRetry = CS_FALSE;
+          if ((retcode = ct_con_props(connection, CS_SET,
+                    CS_SEC_EXTENDED_ENCRYPTION, 
+                    &extendedEncryption, CS_UNUSED, (CS_INT*)NULL)) != CS_SUCCEED) {
+            warn("ct_con_props(CS_SEC_EXTENDED_ENCRYPTION, true) failed");
+            return 0;
+          }
+          if ((retcode = ct_con_props(connection, CS_SET,
+                    CS_SEC_NON_ENCRYPTION_RETRY,
+                    &nonEncryptionRetry, CS_UNUSED, (CS_INT*)NULL)) != CS_SUCCEED) {
+            warn("ct_con_props(CS_SEC_NON_ENCRYPTION_RETRY, false) failed");
+            return 0;
+          }
+        }
+#endif
       }
     }
 #if defined(CS_PROP_SSL_CA)
