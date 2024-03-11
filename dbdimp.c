@@ -1492,7 +1492,8 @@ static CS_CONNECTION *syb_db_connect(imp_dbh_t *imp_dbh) {
           PerlIO_printf(DBIc_LOGPIO(imp_dbh), "    syb_db_login() -> encryptPassword = %d\n",level);
         }
         int i = CS_TRUE;
-        if (level == 1) {
+        /* CS_SEC_ENCRYPTION must be true to enable the additional properties below */
+        if (level != 0) {
           if ((retcode = ct_con_props(connection, CS_SET, CS_SEC_ENCRYPTION,
                       (CS_VOID*)&i, CS_UNUSED, (CS_INT*)NULL)) != CS_SUCCEED) {
             warn("ct_con_props(CS_SEC_ENCRYPTION, true) failed");
@@ -1500,7 +1501,9 @@ static CS_CONNECTION *syb_db_connect(imp_dbh_t *imp_dbh) {
           }
         }
 #if defined(CS_SEC_EXTENDED_ENCRYPTION)
-        if (level >= 1) {
+/* Set the level to > 1 to enable asymetric password encryption. This also disables 
+non-encrypted retries */
+        if (level > 1) {
           CS_INT extendedEncryption = CS_TRUE;
           CS_INT nonEncryptionRetry = CS_FALSE;
           if ((retcode = ct_con_props(connection, CS_SET,
@@ -5336,6 +5339,13 @@ static int datetime2str(ColData *colData, CS_DATAFMT *srcfmt, char *buff,
     }
 
     cs_dt_crack(context, datatype, value, &rec);
+    /* Issue 130 - cs_dt_crack on bigdatetime does not set datemsecond - instead if fills
+       datesecfrack */
+#if defined(CS_BIGDATETIME_TYPE)
+    if (rec.datesecprec > 0) {
+      rec.datemsecond = rec.datesecfrac / 1000;
+    }
+#endif
     if (type == 2) {
       sprintf(buff, "%4.4d-%2.2d-%2.2dT%2.2d:%2.2d:%2.2d.%3.3dZ",
           rec.dateyear, rec.datemonth + 1, rec.datedmonth,
