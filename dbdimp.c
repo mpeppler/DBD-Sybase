@@ -2747,6 +2747,8 @@ SV *syb_db_FETCH_attrib(SV *dbh, imp_dbh_t *imp_dbh, SV *keysv) {
   return sv_2mortal(retsv);
 }
 
+/* set mode to 0 to avoid an error message being printed if ct_cmd_alloc fails
+This is useful for the ping() call, for example */
 static CS_COMMAND * syb_alloc_cmd(imp_dbh_t *imp_dbh, CS_CONNECTION *connection, int mode) {
   CS_COMMAND *cmd;
   CS_RETCODE retcode;
