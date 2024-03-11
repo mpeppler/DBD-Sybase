@@ -114,7 +114,7 @@ static CS_RETCODE fetch_data _((imp_dbh_t *, CS_COMMAND*));
 static CS_RETCODE CS_PUBLIC clientmsg_cb _((CS_CONTEXT*, CS_CONNECTION*, CS_CLIENTMSG*));
 static CS_RETCODE CS_PUBLIC servermsg_cb _((CS_CONTEXT*, CS_CONNECTION*, CS_SERVERMSG*));
 static CS_RETCODE CS_PUBLIC cslibmsg_cb(CS_CONTEXT *context, CS_CLIENTMSG *errmsg);
-static CS_COMMAND *syb_alloc_cmd _((imp_dbh_t *, CS_CONNECTION*));
+static CS_COMMAND *syb_alloc_cmd _((imp_dbh_t *, CS_CONNECTION*, int mode));
 static void dealloc_dynamic _((imp_sth_t *));
 static int map_syb_types _((int));
 static int map_sql_types _((int));
@@ -1663,7 +1663,7 @@ non-encrypted retries */
   }
 
 static int syb_db_use(imp_dbh_t *imp_dbh, CS_CONNECTION *connection) {
-  CS_COMMAND *cmd = syb_alloc_cmd(imp_dbh, connection);
+  CS_COMMAND *cmd = syb_alloc_cmd(imp_dbh, connection, 1);
   CS_RETCODE ret;
   CS_INT restype;
   char statement[255];
@@ -1734,7 +1734,7 @@ static int extract_version(char *buff, char *ver) {
 }
 
 static int get_server_version(SV *dbh, imp_dbh_t *imp_dbh, CS_CONNECTION *con) {
-  CS_COMMAND *cmd = syb_alloc_cmd(imp_dbh, con);
+  CS_COMMAND *cmd = syb_alloc_cmd(imp_dbh, con, 1);
   CS_RETCODE ret;
   CS_INT restype;
   char statement[60];
@@ -1823,7 +1823,7 @@ int syb_ping(SV *dbh, imp_dbh_t *imp_dbh) {
 
   DBIh_CLEAR_ERROR(imp_dbh);
 
-  cmd = syb_alloc_cmd(imp_dbh, imp_dbh->connection);
+  cmd = syb_alloc_cmd(imp_dbh, imp_dbh->connection, 0 /*silent*/);
 
   if (!cmd) {
     return 0;
@@ -2033,7 +2033,7 @@ int syb_db_commit(SV *dbh, imp_dbh_t *imp_dbh) {
     return 1;
   }
 
-  cmd = syb_alloc_cmd(imp_dbh, imp_dbh->connection);
+  cmd = syb_alloc_cmd(imp_dbh, imp_dbh->connection, 1);
   if (imp_dbh->doRealTran) {
     sprintf(buff, "\nCOMMIT TRAN %s\n", imp_dbh->tranName);
   } else {
@@ -2099,7 +2099,7 @@ int syb_db_rollback(SV *dbh, imp_dbh_t *imp_dbh) {
     return 1;
   }
 
-  cmd = syb_alloc_cmd(imp_dbh, imp_dbh->connection);
+  cmd = syb_alloc_cmd(imp_dbh, imp_dbh->connection, 1);
   if (imp_dbh->doRealTran) {
     sprintf(buff, "\nROLLBACK TRAN %s\n", imp_dbh->tranName);
   } else {
@@ -2151,7 +2151,7 @@ static int syb_db_opentran(SV *dbh, imp_dbh_t *imp_dbh) {
     return 1;
   }
 
-  cmd = syb_alloc_cmd(imp_dbh, imp_dbh->connection);
+  cmd = syb_alloc_cmd(imp_dbh, imp_dbh->connection, 1);
   sprintf(imp_dbh->tranName, "DBI%x", (void*)imp_dbh);
   sprintf(buff, "\nBEGIN TRAN %s\n", imp_dbh->tranName);
   retcode = ct_command(cmd, CS_LANG_CMD, buff, CS_NULLTERM, CS_UNUSED);
@@ -2747,12 +2747,14 @@ SV *syb_db_FETCH_attrib(SV *dbh, imp_dbh_t *imp_dbh, SV *keysv) {
   return sv_2mortal(retsv);
 }
 
-static CS_COMMAND * syb_alloc_cmd(imp_dbh_t *imp_dbh, CS_CONNECTION *connection) {
+static CS_COMMAND * syb_alloc_cmd(imp_dbh_t *imp_dbh, CS_CONNECTION *connection, int mode) {
   CS_COMMAND *cmd;
   CS_RETCODE retcode;
 
   if ((retcode = ct_cmd_alloc(connection, &cmd)) != CS_SUCCEED) {
-    syb_set_error(imp_dbh, -1, "ct_cmd_alloc failed");
+    if (mode != 0) {
+      syb_set_error(imp_dbh, -1, "ct_cmd_alloc failed");
+    }
     return NULL;
   }
   if (DBIc_DBISTATE(imp_dbh)->debug >= 4) {
@@ -2932,7 +2934,7 @@ static CS_RETCODE dyn_prepare(imp_dbh_t *imp_dbh, imp_sth_t *imp_sth,
   imp_sth->dyn_execed = 0;
 
   imp_sth->cmd = syb_alloc_cmd(imp_dbh,
-      imp_sth->connection ? imp_sth->connection : imp_dbh->connection);
+      imp_sth->connection ? imp_sth->connection : imp_dbh->connection, 1);
 
   ret = ct_dynamic(imp_sth->cmd, CS_PREPARE, imp_sth->dyn_id, CS_NULLTERM,
       statement, CS_NULLTERM);
@@ -3111,7 +3113,7 @@ int syb_st_prepare(SV *sth, imp_sth_t *imp_sth, char *statement, SV *attribs) {
 
       imp_sth->cmd = syb_alloc_cmd(imp_dbh,
           imp_sth->connection ? imp_sth->connection
-              : imp_dbh->connection);
+              : imp_dbh->connection, 1);
       ret = CS_SUCCEED;
       imp_sth->dyn_execed = 0;
     } else {
@@ -4128,7 +4130,7 @@ static int cmd_execute(SV *sth, imp_sth_t *imp_sth) {
        bug# 461 */
       imp_sth->cmd = syb_alloc_cmd(imp_dbh,
           imp_sth->connection ? imp_sth->connection
-              : imp_dbh->connection);
+              : imp_dbh->connection, 1);
     }
     if (ct_command(imp_sth->cmd, CS_LANG_CMD, imp_sth->statement,
         CS_NULLTERM, CS_UNUSED) != CS_SUCCEED) {
