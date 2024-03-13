@@ -5432,6 +5432,14 @@ static int time2str(ColData *colData, CS_DATAFMT *srcfmt, char *buff, CS_INT len
     }
 
     cs_dt_crack(context, datatype, value, &rec);
+    /* Issue 130 - cs_dt_crack on bigdatetime does not set datemsecond - instead if fills
+       datesecfrack */
+#if defined(CS_BIGTIME_TYPE)
+    if (rec.datesecprec > 0) {
+      rec.datemsecond = rec.datesecfrac / 1000;
+    }
+#endif
+
     if (type == 2) {
       sprintf(buff, "%4.4d-%2.2d-%2.2dT%2.2d:%2.2d:%2.2d.%3.3dZ",
           rec.dateyear, rec.datemonth + 1, rec.datedmonth,
