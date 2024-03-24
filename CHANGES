@@ -1,5 +1,6 @@
 Release 1.24
     Added support for asymmetric password encryption.
+    Fix issue with milliseconds not being returned for bigdatetime in ISO mode.
 
 Release 1.23
 
