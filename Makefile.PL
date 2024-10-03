@@ -31,7 +31,7 @@ my $file;
 my $chained;
 my $threaded_libs;
 my $accept_test_defaults;
-ny $use_env;
+my $use_env;
 GetOptions(
   '--file'                 => \$file,
   '--chained:s'            => \$chained,
@@ -39,6 +39,10 @@ GetOptions(
   '--accept_test_defaults' => \$accept_test_defaults,
   '--use_env'              => \$use_env
 );
+
+if ($ENV{DBD_SYB_USE_ENV} and $ENV{DBD_SYB_USE_ENV} =~ /y/i) {
+  $use_env = 1;
+}
 
 select(STDOUT);
 $| = 1;
@@ -456,10 +460,10 @@ sub configPwd {
   close(IN);
 
   if ($use_env) {
-    $pwd{SRV} = $ENV{DBD_SYB_SRV};
-    $pwd{UID} = $ENV{DBD_SYB_UID};
-    $pwd{PWD} = $ENV{PWD};
-    $pwd{DB}  = $ENV{DB};
+    $pwd{SRV} = $ENV{DBD_SYB_SRV} || "SYBASE";
+    $pwd{UID} = $ENV{DBD_SYB_UID} || "sa";
+    $pwd{PWD} = $ENV{DBD_SYB_PWD};
+    $pwd{DB}  = $ENV{DBD_SYB_DB};
   } elsif ($accept_test_defaults) {
     $pwd{SRV} = $pwd{SRV};
     $pwd{UID} = $pwd{UID};

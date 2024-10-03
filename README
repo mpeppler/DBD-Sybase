@@ -132,7 +132,8 @@ and run
 
 If any of the environment variables mentioned above are missing the default value will
 be used (e.g. the build currently defaults to using CHAINED mode and not using the 
-threaded libs)
+threaded libs). You can also set DBD_SYB_USE_ENV to Y to avoid using the --use_env 
+command line switch.
 
 
 Known Problems:
