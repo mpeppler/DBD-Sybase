@@ -1567,7 +1567,9 @@ non-encrypted retries */
       // Try to connect - if this fails we do some cleanup...
       if ((retcode = ct_connect(connection, imp_dbh->server, len)) != CS_SUCCEED) {
         if (glocale != NULL) {
-          cs_loc_drop(context, glocale);
+          if (cs_loc_drop(context, glocale) == CS_SUCCEED) {
+            glocale = NULL;
+          }
         }
         ct_con_drop(connection);
         return 0;
@@ -1586,7 +1588,9 @@ non-encrypted retries */
         /* cleanup, and return NULL */
         ct_close(connection, CS_FORCE_CLOSE);
         if (glocale != NULL) {
-          cs_loc_drop(context, glocale);
+          if (cs_loc_drop(context, glocale) == CS_SUCCEED) {
+            glocale = NULL;
+          }
         }
         ct_con_drop(connection);
 
