@@ -1,3 +1,8 @@
+Release 1.27
+    Remove incorrect cs_loc_drop() calls in syb_db_connect(). The glocale 
+    variable is global and allocated/initialized in syb_init(), and
+    should therefore remain available for the life of the process.
+
 Release 1.26
     Fix missing conditional statements for "new" datatypes introduced with
     ASE 15.x

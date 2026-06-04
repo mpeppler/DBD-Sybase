@@ -1,5 +1,5 @@
 /*
- Copyright (c) 1997-2023  Michael Peppler
+ Copyright (c) 1997-2026  Michael Peppler
 
  You may distribute under the terms of either the GNU General Public
  License or the Artistic License, as specified in the Perl README file.
@@ -1566,11 +1566,6 @@ non-encrypted retries */
       
       // Try to connect - if this fails we do some cleanup...
       if ((retcode = ct_connect(connection, imp_dbh->server, len)) != CS_SUCCEED) {
-        if (glocale != NULL) {
-          if (cs_loc_drop(context, glocale) == CS_SUCCEED) {
-            glocale = NULL;
-          }
-        }
         ct_con_drop(connection);
         return 0;
       }
@@ -1587,11 +1582,6 @@ non-encrypted retries */
       if (imp_dbh->failedDbUseFatal && ret < 0) {
         /* cleanup, and return NULL */
         ct_close(connection, CS_FORCE_CLOSE);
-        if (glocale != NULL) {
-          if (cs_loc_drop(context, glocale) == CS_SUCCEED) {
-            glocale = NULL;
-          }
-        }
         ct_con_drop(connection);
 
         return 0;
