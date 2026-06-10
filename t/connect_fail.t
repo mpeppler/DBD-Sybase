@@ -20,12 +20,12 @@ BEGIN { use_ok('DBI');
 $Srv = "invalid_srv";
 
 #DBI->trace(3);
-my $dbh = DBI->connect("dbi:Sybase:$Srv;database=$Db", $Uid, $Pwd, {PrintError => 0, RaiseError => 0});
+my $dbh = DBI->connect("dbi:Sybase:server=$Srv;database=$Db", $Uid, $Pwd, {PrintError => 0, RaiseError => 0});
 #DBI->trace(0);
 
 ok(!defined($dbh), "$Srv is not available");
 
-$dbh = DBI->connect("dbi:Sybase:$Srv;database=$Db", $Uid, $Pwd, {PrintError => 0, RaiseError => 0});
+$dbh = DBI->connect("dbi:Sybase:server=$Srv;database=$Db", $Uid, $Pwd, {PrintError => 0, RaiseError => 0});
 
 ok(!defined($dbh), "$Srv is not available after retry");
 

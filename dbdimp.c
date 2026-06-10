@@ -1212,7 +1212,8 @@ int syb_db_login(SV *dbh, imp_dbh_t *imp_dbh, char *dsn, char *uid, char *pwd, S
   if (!init_dbh(imp_dbh)) {
     retval = 0;
   }
-  if ((imp_dbh->connection = syb_db_connect(imp_dbh)) == NULL) {
+  /* only try to connect if init_dbh() is successful! */
+  if (retval && (imp_dbh->connection = syb_db_connect(imp_dbh)) == NULL) {
     retval = 0;
   } else {
     retval = 1;
@@ -1396,14 +1397,14 @@ static CS_CONNECTION *syb_db_connect(imp_dbh_t *imp_dbh) {
       != CS_SUCCEED) {
 
       warn("ct_con_props(CS_LOC_PROP) failed");
-      return 0;
+      return NULL;
     }
   }
 
   if ((retcode = ct_con_props(connection, CS_SET, CS_USERDATA, &imp_dbh,
                 CS_SIZEOF(imp_dbh), NULL)) != CS_SUCCEED) {
     warn("ct_con_props(CS_USERDATA) failed");
-    return 0;
+    return NULL;
   }
   if (imp_dbh->tdsLevel[0] != 0) {
     CS_INT value = 0;
@@ -1442,7 +1443,7 @@ static CS_CONNECTION *syb_db_connect(imp_dbh_t *imp_dbh) {
     if (ct_con_props(connection, CS_SET, CS_PACKETSIZE, (CS_VOID*)&i,
               CS_UNUSED, (CS_INT*)NULL) != CS_SUCCEED) {
       warn("ct_con_props(CS_PACKETSIZE, %d) failed", i);
-      return 0;
+      return NULL;
     }
   }
 
@@ -1453,14 +1454,14 @@ static CS_CONNECTION *syb_db_connect(imp_dbh_t *imp_dbh) {
       if ((retcode = ct_con_props(connection, CS_SET, CS_USERNAME,
                   imp_dbh->uid, CS_NULLTERM, NULL)) != CS_SUCCEED) {
         warn("ct_con_props(CS_USERNAME) failed");
-        return 0;
+        return NULL;
       }
     }
     if (retcode == CS_SUCCEED && *imp_dbh->pwd) {
       if ((retcode = ct_con_props(connection, CS_SET, CS_PASSWORD,
                   imp_dbh->pwd, CS_NULLTERM, NULL)) != CS_SUCCEED) {
         warn("ct_con_props(CS_PASSWORD) failed");
-        return 0;
+        return NULL;
       }
     }
 #if defined(CS_SEC_NETWORKAUTH)
@@ -1477,13 +1478,13 @@ static CS_CONNECTION *syb_db_connect(imp_dbh_t *imp_dbh) {
     if ((retcode = ct_con_props(connection, CS_SET, CS_SEC_NETWORKAUTH,
                 (CS_VOID *) &i, CS_UNUSED, NULL)) != CS_SUCCEED) {
       warn("ct_con_props(CS_SEC_NETWORKAUTH) failed");
-      return 0;
+      return NULL;
     }
 
     if ((retcode = ct_con_props(connection, CS_SET, CS_SEC_SERVERPRINCIPAL,
                 imp_dbh->kerberosPrincipal, CS_NULLTERM, NULL)) != CS_SUCCEED) {
       warn("ct_con_props(CS_SEC_SERVERPRINCIPAL) failed");
-      return 0;
+      return NULL;
     }
   }
 #endif
@@ -1492,13 +1493,13 @@ static CS_CONNECTION *syb_db_connect(imp_dbh_t *imp_dbh) {
                 *imp_dbh->scriptName ? imp_dbh->scriptName : scriptName,
                 CS_NULLTERM, NULL)) != CS_SUCCEED) {
       warn("ct_con_props(CS_APPNAME, %s) failed", imp_dbh->scriptName);
-      return 0;
+      return NULL;
     }
     if ((retcode = ct_con_props(connection, CS_SET, CS_HOSTNAME,
                   *imp_dbh->hostname ? imp_dbh->hostname : hostname, CS_NULLTERM,
                   NULL)) != CS_SUCCEED) {
       warn("ct_con_props(CS_HOSTNAME, %s) failed", imp_dbh->hostname);
-      return 0;
+      return NULL;
     }
   }
   if (retcode == CS_SUCCEED) {
@@ -1513,7 +1514,7 @@ static CS_CONNECTION *syb_db_connect(imp_dbh_t *imp_dbh) {
         if ((retcode = ct_con_props(connection, CS_SET, CS_SEC_ENCRYPTION,
                     (CS_VOID*)&i, CS_UNUSED, (CS_INT*)NULL)) != CS_SUCCEED) {
           warn("ct_con_props(CS_SEC_ENCRYPTION, true) failed");
-          return 0;
+          return NULL;
         }
       }
 #if defined(CS_SEC_EXTENDED_ENCRYPTION)
@@ -1559,7 +1560,7 @@ non-encrypted retries */
                   (CS_VOID*)buff,
                   CS_NULLTERM, (CS_INT*)NULL)) != CS_SUCCEED) {
       warn("ct_con_props(CS_SERVERADDR) failed");
-      return 0;
+      return NULL;
     }
 #else
     croak("This version of OpenClient doesn't support CS_SERVERADDR");
@@ -1571,7 +1572,7 @@ non-encrypted retries */
     if ((retcode = ct_con_props(connection, CS_SET, CS_BULK_LOGIN,
                 (CS_VOID*)&flag, CS_UNUSED, (CS_INT*)NULL)) != CS_SUCCEED) {
       warn("ct_con_props(CS_BULK_LOGIN) failed");
-      return 0;
+      return NULL;
     }
   }
 
@@ -1581,7 +1582,7 @@ non-encrypted retries */
     // Try to connect - if this fails we do some cleanup...
     if ((retcode = ct_connect(connection, imp_dbh->server, len)) != CS_SUCCEED) {
       ct_con_drop(connection);
-      return 0;
+      return NULL;
     }
   }
   if (imp_dbh->ifile[0]) {
@@ -1598,7 +1599,7 @@ non-encrypted retries */
       ct_close(connection, CS_FORCE_CLOSE);
       ct_con_drop(connection);
 
-      return 0;
+      return NULL;
     }
   }
 
