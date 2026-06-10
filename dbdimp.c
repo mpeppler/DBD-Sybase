@@ -1209,9 +1209,8 @@ int syb_db_login(SV *dbh, imp_dbh_t *imp_dbh, char *dsn, char *uid, char *pwd, S
   MUTEX_LOCK(context_alloc_mutex);
 #endif
 
-  if (!init_dbh(imp_dbh)) {
-    retval = 0;
-  }
+  retval = init_dbh(imp_dbh);
+  
   /* only try to connect if init_dbh() is successful! */
   if (retval && (imp_dbh->connection = syb_db_connect(imp_dbh)) == NULL) {
     retval = 0;
