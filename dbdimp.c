@@ -1210,7 +1210,7 @@ int syb_db_login(SV *dbh, imp_dbh_t *imp_dbh, char *dsn, char *uid, char *pwd, S
 #endif
 
   retval = init_dbh(imp_dbh);
-  
+
   /* only try to connect if init_dbh() is successful! */
   if (retval && (imp_dbh->connection = syb_db_connect(imp_dbh)) == NULL) {
     retval = 0;
@@ -1658,7 +1658,7 @@ static int syb_db_use(imp_dbh_t *imp_dbh, CS_CONNECTION *connection) {
   CS_COMMAND *cmd = syb_alloc_cmd(imp_dbh, connection, 1);
   CS_RETCODE ret;
   CS_INT restype;
-  char statement[255];
+  char statement[270];
   int retval = 0;
   char *db;
 
