@@ -1,6 +1,6 @@
 # -*-Perl-*-
 
-# Copyright (c) 1996-2025   Michael Peppler
+# Copyright (c) 1996-2026   Michael Peppler
 #
 #   You may distribute under the terms of either the GNU General Public
 #   License or the Artistic License, as specified in the Perl README file.
